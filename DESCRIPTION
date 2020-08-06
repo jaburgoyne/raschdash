@@ -2,13 +2,12 @@ Package: raschdash
 Type: Package
 Title: Rasch-Model Dashboards for Classroom Testing
 Version: 0.0.0.9000
-Authors@R: person(
-    given = c('John', 'Ashley'), family = 'Burgoyne', 
+Authors@R: person(c('John', 'Ashley'), 'Burgoyne', 
     email = 'j.a.burgoyne@uva.nl',
     role = c('aut', 'cre'))
 Description: Dashboard generator for exploring calibrations and diagnostics
     from Bayesian Rasch-model fits, intended to support classroom testing.
-License: BSD_3_clause + file LICENCE
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Biarch: true
