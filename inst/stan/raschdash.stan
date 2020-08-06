@@ -34,8 +34,6 @@ data {
                                       //   2-3 = rating scale
                                       //   4+  = binomial
         int<lower=0> y[M];        // score for observation m
-        real alpha;                   // centre of ability scale
-        real gamma;                   // standard deviation of ability scale
 }
 
 transformed data {
@@ -114,20 +112,18 @@ model {
 }
 
 generated quantities {
-        real<lower=0> gamma_logit = gamma / sqrt(dot_self([psi, phi]));
-        vector[J] group_ability = alpha + gamma_logit * xi;
-        real prior_group_ability = gamma_logit * normal_rng(0, psi);
-        vector[N] person_ability = alpha + gamma_logit * eta;
+        real<lower=0> gamma = inv_sqrt(square(psi) + square(phi));
+        vector[J] group_ability = gamma * xi;
+        real prior_group_ability = gamma * normal_rng(0, psi);
+        vector[N] person_ability = gamma * eta;
         real prior_person_ability =
-                prior_group_ability + gamma_logit * normal_rng(0, phi);
-        vector[L] testlet_difficulty = alpha + gamma_logit * epsilon;
-        real prior_testlet_difficulty =
-                alpha + gamma_logit * normal_rng(nu, theta_epsilon);
-        vector[I] item_difficulty = alpha + gamma_logit * delta;
+                prior_group_ability + gamma * normal_rng(0, phi);
+        vector[L] testlet_difficulty = gamma * epsilon;
+        real prior_testlet_difficulty = gamma * normal_rng(nu, theta_epsilon);
+        vector[I] item_difficulty = gamma * delta;
         real prior_item_difficulty =
-                prior_testlet_difficulty
-                + gamma_logit * normal_rng(0, theta_upsilon);
-        vector[K] thresholds = gamma_logit * tau;
+                prior_testlet_difficulty + gamma * normal_rng(0, theta_upsilon);
+        vector[K] thresholds = gamma * tau;
         // Expected ratings and entropies can be computed from
         // replications, but we need two prior versions, one with
         // persons freed and one with items freed.
