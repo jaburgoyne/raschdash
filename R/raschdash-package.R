@@ -1,6 +1,8 @@
 #' @keywords internal
 "_PACKAGE"
 
+#' \lifecycle{experimental}
+
 # This block is recommended by rstantools
 #' @import Rcpp
 #' @import methods
@@ -11,5 +13,6 @@
 # roxygen namespace tags. Modify with care!
 ## usethis namespace: start
 #' @importFrom magrittr %>%
+#' @importFrom lifecycle deprecate_soft
 ## usethis namespace: end
 NULL

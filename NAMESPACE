@@ -3,6 +3,7 @@
 export(new_rdfit)
 import(Rcpp)
 import(methods)
+importFrom(lifecycle,deprecate_soft)
 importFrom(magrittr,"%>%")
 importFrom(rstan,sampling)
 useDynLib(raschdash)

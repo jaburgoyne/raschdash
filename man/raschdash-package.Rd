@@ -9,6 +9,14 @@
 Dashboard generator for exploring calibrations and diagnostics
     from Bayesian Rasch-model fits, intended to support classroom testing.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/jaburgoyne/raschdash}
+  \item Report bugs at \url{https://github.com/jaburgoyne/raschdash/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: John Ashley Burgoyne \email{j.a.burgoyne@uva.nl}
 
