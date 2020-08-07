@@ -21,10 +21,10 @@ data {
         int<lower=1> I;               // number of items
         // J is reserved for facets in a future implementation
         int<lower=1> M;               // number of groups
-        int<lower=1> N;               // number of students
+        int<lower=1> N;               // number of person
         int<lower=1> O;               // number of observations
-        int<lower=1,upper=M> mm[N];   // group for student n
-        int<lower=-M,upper=N> nn[O];  // student for observation m
+        int<lower=1,upper=M> mm[N];   // group for person n
+        int<lower=-M,upper=N> nn[O];  // person for observation m
                                       //   negative value => group observation
         int<lower=1,upper=L> ll[I];   // testlet for item i
         int<lower=1,upper=I> ii[O];   // item for observation o
@@ -67,11 +67,11 @@ parameters {
                                         //   Vanishes if no rating scales
                                         //   or a single threshold.
         vector[M] xi_raw;               // ability for group j
-        vector[N] zeta_raw;             // relative ability for student n
+        vector[N] zeta_raw;             // relative ability for person n
         real<lower=0> theta_epsilon;    // scale of testlet difficulties
         real<lower=0> theta_upsilon;    // scale of relative item difficulties
         real<lower=0> psi;              // scale of group abilities
-        real<lower=0> phi;              // scale of relative student abilities
+        real<lower=0> phi;              // scale of relative person abilities
 }
 
 transformed parameters {
