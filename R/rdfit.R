@@ -14,8 +14,9 @@
 #'
 #' @return An \code{rdfit} object.
 #'
-#' @import dplyr
+#' @importFrom dplyr arrange bind_rows dense_rank distinct inner_join mutate
 #' @importFrom rlang .data
+#' @importFrom tibble tibble
 #' @export
 new_rdfit <- function(cohorts,
                       groups, person_groups, persons,
