@@ -5,14 +5,24 @@
 \title{Constructor for \code{rdfit}}
 \usage{
 new_rdfit(
-  data,
-  cohort_colname,
-  group_colname,
-  person_colname,
-  testlet_colname,
-  item_colname,
-  max_score_colname,
-  obs_score_colname
+  cohorts,
+  groups,
+  person_groups,
+  persons,
+  testlets,
+  item_testlets,
+  items,
+  max_scores,
+  K = 0,
+  obs_group_cohorts,
+  obs_groups,
+  obs_group_items,
+  obs_group_scores,
+  obs_person_cohorts,
+  obs_persons,
+  obs_person_items,
+  obs_person_scores,
+  ...
 )
 }
 \arguments{
