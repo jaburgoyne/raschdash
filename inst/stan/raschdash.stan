@@ -20,6 +20,7 @@ data {
         int<lower=1> L;               // number of testlets
         int<lower=1> I;               // number of items
         // J is reserved for facets in a future implementation
+        int<lower=0> K;               // max score on rating scale
         int<lower=1> M;               // number of groups
         int<lower=1> N;               // number of person
         int<lower=1> O;               // number of observations
@@ -29,30 +30,11 @@ data {
         int<lower=1,upper=L> ll[I];   // testlet for item i
         int<lower=1,upper=I> ii[O];   // item for observation o
         int<lower=1> kk[I];           // maximum score for item i
-                                      //   1   = Rasch
-                                      //   2-4 = rating scale
-                                      //   5+  = binomial
+                                      //   Rasch if 1
+                                      //   rating scale if K
+                                      //   binomial otherwise
                                       //   TODO: Add more flixible typing.
         int<lower=0> y[O];            // score for observation o
-}
-
-transformed data {
-        int K_MAX = 4;                  // maximum allowable rating-scale score
-        int<lower=0,upper=K_MAX> K = 0; // number of rating-scale thresholds
-        for (i in 1:I) {
-                if (kk[i] > 1 && kk[i] <= K_MAX) {
-                        if (K == 0) {
-                                K = kk[i];
-                        } else if (K == kk[i]) {
-                                continue;
-                        } else {
-                                reject(
-                                        "All rating-scale items must have ",
-                                        "the same number of categories."
-                                )
-                        }
-                }
-        }
 }
 
 parameters {
@@ -82,16 +64,18 @@ transformed parameters {
         vector[N] eta;
         epsilon = nu + theta_epsilon * epsilon_raw;
         delta = epsilon[ll] + theta_upsilon * upsilon_raw;
-        if (K > 1) {
+        if (K == 1) {
+                tau = [0]';
+        } else {
                 // Our prior is that thresholds should be ascending,
-                // disordered thresholds are possible. Use the
+                // but disordered thresholds are possible. Use the
                 // traditional log(2) separation requirement
                 // (Linacre, 2002) as a prior mean.
                 vector[K-1] d_tau =
                         log(2) + d_tau_raw[1] + append_row(d_tau_err, 0);
                 vector[K] tau_raw = cumulative_sum(append_row(0, d_tau));
                 // Centre between the last two thresholds.
-                tau =  tau_raw - tau_raw[K] + 0.5 * d_tau[K-1];
+                tau = tau_raw - tau_raw[K] + 0.5 * d_tau[K-1];
         }
         xi = psi * xi_raw;
         eta = xi[mm] + phi * zeta_raw;
@@ -119,9 +103,9 @@ model {
                 int k = kk[i];
                 int n = nn[o];
                 real beta = (n < 0 ? xi[-n] : eta[n]) - delta[i];
-                if (k < 2)           y[o] ~ bernoulli_logit(beta);
-                else if (k <= K_MAX) y[o] ~ rsm(beta - tau);
-                else                 y[o] ~ binomial_logit(k, beta);
+                if (k == 1)      y[o] ~ bernoulli_logit(beta);
+                else if (k == K) y[o] ~ rsm(beta - tau);
+                else             y[o] ~ binomial_logit(k, beta);
         }
 }
 
@@ -149,12 +133,11 @@ generated quantities {
                 int k = kk[i];
                 int n = nn[o];
                 real beta = (n < 0 ? xi[-n] : eta[n]) - delta[i];
-                if (k < 2) {
+                if (k == 1) {
                         y_rep[o] = bernoulli_logit_rng(beta);
                         log_lik[o] = bernoulli_logit_lpmf(y[o] | beta);
                         log_lik_rep[o] = bernoulli_logit_lpmf(y_rep[o] | beta);
-                }
-                else if (k < K_MAX) {
+                } else if (k == K) {
                         y_rep[o] = rsm_rng(beta - tau);
                         log_lik[o] = rsm_lpmf(y[o] | beta - tau);
                         log_lik_rep[o] = rsm_lpmf(y_rep[o] | beta - tau);
