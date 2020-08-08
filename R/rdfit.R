@@ -219,8 +219,8 @@ rdfit <- function(data,
                 )
         }
         ## A negative integer is no serious problem for K (it simply fails to
-        ## select any items for rating scale), but Stan needs it to be non-
-        ## negative in order to set the dimension of tau.
+        ## select any items for rating scale), but Stan needs it to be
+        ## non-negative in order to set the dimension of tau.
         K <- max(vec_cast(K, integer(), x_arg = 'K'), 0)
         ## The constructor asks for group and individual observations to be
         ## separated.
