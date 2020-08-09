@@ -819,7 +819,7 @@ public:
         names__.push_back("tau");
         names__.push_back("xi");
         names__.push_back("eta");
-        names__.push_back("gamma");
+        names__.push_back("lambda");
         names__.push_back("testlet_difficulty");
         names__.push_back("prior_testlet_difficulty");
         names__.push_back("item_difficulty");
@@ -1062,65 +1062,65 @@ public:
             if (!include_gqs__) return;
             // declare and define generated quantities
             current_statement_begin__ = 113;
-            double gamma;
-            (void) gamma;  // dummy to suppress unused var warning
-            stan::math::initialize(gamma, DUMMY_VAR__);
-            stan::math::fill(gamma, DUMMY_VAR__);
-            stan::math::assign(gamma,inv_sqrt((square(psi) + square(phi))));
+            double lambda;
+            (void) lambda;  // dummy to suppress unused var warning
+            stan::math::initialize(lambda, DUMMY_VAR__);
+            stan::math::fill(lambda, DUMMY_VAR__);
+            stan::math::assign(lambda,inv_sqrt((square(psi) + square(phi))));
             current_statement_begin__ = 114;
             validate_non_negative_index("testlet_difficulty", "L", L);
             Eigen::Matrix<double, Eigen::Dynamic, 1> testlet_difficulty(L);
             stan::math::initialize(testlet_difficulty, DUMMY_VAR__);
             stan::math::fill(testlet_difficulty, DUMMY_VAR__);
-            stan::math::assign(testlet_difficulty,multiply(gamma, epsilon));
+            stan::math::assign(testlet_difficulty,multiply(lambda, epsilon));
             current_statement_begin__ = 115;
             double prior_testlet_difficulty;
             (void) prior_testlet_difficulty;  // dummy to suppress unused var warning
             stan::math::initialize(prior_testlet_difficulty, DUMMY_VAR__);
             stan::math::fill(prior_testlet_difficulty, DUMMY_VAR__);
-            stan::math::assign(prior_testlet_difficulty,(gamma * normal_rng(nu, theta_epsilon, base_rng__)));
+            stan::math::assign(prior_testlet_difficulty,(lambda * normal_rng(nu, theta_epsilon, base_rng__)));
             current_statement_begin__ = 116;
             validate_non_negative_index("item_difficulty", "I", I);
             Eigen::Matrix<double, Eigen::Dynamic, 1> item_difficulty(I);
             stan::math::initialize(item_difficulty, DUMMY_VAR__);
             stan::math::fill(item_difficulty, DUMMY_VAR__);
-            stan::math::assign(item_difficulty,multiply(gamma, delta));
+            stan::math::assign(item_difficulty,multiply(lambda, delta));
             current_statement_begin__ = 117;
             double prior_item_difficulty;
             (void) prior_item_difficulty;  // dummy to suppress unused var warning
             stan::math::initialize(prior_item_difficulty, DUMMY_VAR__);
             stan::math::fill(prior_item_difficulty, DUMMY_VAR__);
-            stan::math::assign(prior_item_difficulty,(prior_testlet_difficulty + (gamma * normal_rng(0, theta_upsilon, base_rng__))));
+            stan::math::assign(prior_item_difficulty,(prior_testlet_difficulty + (lambda * normal_rng(0, theta_upsilon, base_rng__))));
             current_statement_begin__ = 119;
             validate_non_negative_index("thresholds", "K", K);
             Eigen::Matrix<double, Eigen::Dynamic, 1> thresholds(K);
             stan::math::initialize(thresholds, DUMMY_VAR__);
             stan::math::fill(thresholds, DUMMY_VAR__);
-            stan::math::assign(thresholds,multiply(gamma, tau));
+            stan::math::assign(thresholds,multiply(lambda, tau));
             current_statement_begin__ = 120;
             validate_non_negative_index("group_ability", "M", M);
             Eigen::Matrix<double, Eigen::Dynamic, 1> group_ability(M);
             stan::math::initialize(group_ability, DUMMY_VAR__);
             stan::math::fill(group_ability, DUMMY_VAR__);
-            stan::math::assign(group_ability,multiply(gamma, xi));
+            stan::math::assign(group_ability,multiply(lambda, xi));
             current_statement_begin__ = 121;
             double prior_group_ability;
             (void) prior_group_ability;  // dummy to suppress unused var warning
             stan::math::initialize(prior_group_ability, DUMMY_VAR__);
             stan::math::fill(prior_group_ability, DUMMY_VAR__);
-            stan::math::assign(prior_group_ability,(gamma * normal_rng(0, psi, base_rng__)));
+            stan::math::assign(prior_group_ability,(lambda * normal_rng(0, psi, base_rng__)));
             current_statement_begin__ = 122;
             validate_non_negative_index("person_ability", "N", N);
             Eigen::Matrix<double, Eigen::Dynamic, 1> person_ability(N);
             stan::math::initialize(person_ability, DUMMY_VAR__);
             stan::math::fill(person_ability, DUMMY_VAR__);
-            stan::math::assign(person_ability,multiply(gamma, eta));
+            stan::math::assign(person_ability,multiply(lambda, eta));
             current_statement_begin__ = 123;
             double prior_person_ability;
             (void) prior_person_ability;  // dummy to suppress unused var warning
             stan::math::initialize(prior_person_ability, DUMMY_VAR__);
             stan::math::fill(prior_person_ability, DUMMY_VAR__);
-            stan::math::assign(prior_person_ability,(prior_group_ability + (gamma * normal_rng(0, phi, base_rng__))));
+            stan::math::assign(prior_person_ability,(prior_group_ability + (lambda * normal_rng(0, phi, base_rng__))));
             current_statement_begin__ = 128;
             validate_non_negative_index("y_rep", "O", O);
             std::vector<int> y_rep(O, int(0));
@@ -1214,8 +1214,8 @@ public:
             }
             // validate, write generated quantities
             current_statement_begin__ = 113;
-            check_greater_or_equal(function__, "gamma", gamma, 0);
-            vars__.push_back(gamma);
+            check_greater_or_equal(function__, "lambda", lambda, 0);
+            vars__.push_back(lambda);
             current_statement_begin__ = 114;
             size_t testlet_difficulty_j_1_max__ = L;
             for (size_t j_1__ = 0; j_1__ < testlet_difficulty_j_1_max__; ++j_1__) {
@@ -1384,7 +1384,7 @@ public:
         }
         if (!include_gqs__) return;
         param_name_stream__.str(std::string());
-        param_name_stream__ << "gamma";
+        param_name_stream__ << "lambda";
         param_names__.push_back(param_name_stream__.str());
         size_t testlet_difficulty_j_1_max__ = L;
         for (size_t j_1__ = 0; j_1__ < testlet_difficulty_j_1_max__; ++j_1__) {
@@ -1537,7 +1537,7 @@ public:
         }
         if (!include_gqs__) return;
         param_name_stream__.str(std::string());
-        param_name_stream__ << "gamma";
+        param_name_stream__ << "lambda";
         param_names__.push_back(param_name_stream__.str());
         size_t testlet_difficulty_j_1_max__ = L;
         for (size_t j_1__ = 0; j_1__ < testlet_difficulty_j_1_max__; ++j_1__) {

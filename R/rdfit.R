@@ -1,32 +1,116 @@
-#' Constructor for \code{rdfit}
+#' Fit a `raschdash` model
 #'
-#' Construct an \code{rdfit} object.
+#' Create `rdfit` objects from observed data.
+#'
+#' The `rdfit` function is intended to be the primary method for users to create
+#' `rdfit` objects. Most R users work with so-called *dimensional data* in a
+#' single data frame. In the case that the data are alread stored in a
+#' normalised form, however, the raw `new_rdfit` constructor will work. Be
+#' aware that `new_rdfit` does not validate whether the data are properly
+#' normalised, and Stan will throw rather cryptic error message if they are not.
 #'
 #' @param data a data frame with columns for cohort, group, person, testlet,
-#'             item, maximum score, and observed score
-#' @param cohort_colname name of the cohort column
-#' @param group_colname name of the group column
-#' @param person_colname name of the person column
-#' @param testlet_colname name of the testlet column
-#' @param item_colname name of the item column
-#' @param max_score_colname name of the maximum score column
-#' @param obs_score_colname name of the observed score column
+#'             item, maximum possible item score, and observed score. For
+#'             group-level observations, the person should be `NA`.
+#' @param cohort <[tidyr::tidyr_tidy_select]> cohort column. Defaults to a
+#'               generic *All* cohort.
+#' @param group <[tidyr::tidyr_tidy_select]> group column
+#' @param person <[tidyr::tidyr_tidy_select]> person column
+#' @param testlet <[tidyr::tidyr_tidy_select]> testlet column
+#' @param item <[tidyr::tidyr_tidy_select]> item column
+#' @param max_score <[tidyr::tidyr_tidy_select]> maximum-score column
+#' @param obs_score <[tidyr::tidyr_tidy_select]> observed score column
+#' @param k maximum score of rating-scale items. Defaults to no rating scales.
+#' @param cohorts vector of unique cohort identifiers
+#' @param groups vector of unique group identifiers
+#' @param persons,person_groups vectors of unique person identifiers (`persons`)
+#'                              and the identifiers of their corresponding
+#'                              groups (`person_groups`)
+#' @param testlets vector of unique testlet identifiers
+#' @param items,item_testlets,item_max_scores vectors of unique item identifiers
+#'                                            (`items`) and their corresponding
+#'                                            testlets (`item_testlets`) and
+#'                                            maximum scores(`max_scores`)
+#' @param obs_group_cohorts,obs_groups,obs_group_items,obs_group_scores
+#'            for the group-level observations, vectors of the corresponding
+#'            cohorts (`obs_group_cohorts`), groups (`obs_groups`), items
+#'            (`obs_group_items`), and observed scores (`obs_group_scores`)
+#' @param obs_person_cohorts,obs_persons,obs_person_items,obs_person_scores
+#'            for the person-level observations, vectors of the corresponding
+#'            cohorts (`obs_person_cohorts`), persons (`obs_persons`), items
+#'            (`obs_person_items`), and observed scores (`obs_person_scores`)
+#' @param ... additional parameters passed to [rstan::sampling()]
 #'
-#' @return An \code{rdfit} object.
-#'
+#' @return An `rdfit` object, which has the following attributes.
+#' \describe{
+#'     \item{stanfit}{the [rstan::stanfit] object for the fitted
+#'                    model. It contains samples of the following parameters.
+#'                    \itemize{
+#'                      \item logit-scale parameters
+#'                        \describe{
+#'                          \item{xi}{group abilities}
+#'                          \item{eta}{person abilities}
+#'                          \item{epsilon}{testlet difficulties}
+#'                          \item{delta}{item difficulties}
+#'                          \item{tau}{rating-scale threshold offsets from
+#'                                     overall item difficulty (if any
+#'                                     rating-scale items are present)}
+#'                          \item{lambda}{standard deviation of person
+#'                                        abilities. Used to transform the
+#'                                        logit scale to the standard scale.}
+#'                        }
+#'                      \item standard-scale parameters
+#'                        \describe{
+#'                          \item{group_ability}{group abilities}
+#'                          \item{person_ability}{person abilities}
+#'                          \item{testlet_difficulty}{testlet difficulties}
+#'                          \item{item_difficulty}{item difficulties}
+#'                          \item{thresholds}{rating-scale threshold offsets
+#'                                            from overall item difficulty (if
+#'                                            any rating-scale items are
+#'                                            present)}
+#'                        }
+#'                      \item standard-scale parameters under their prior
+#'                            distribution given the posterior distribution of
+#'                            the hyper-parameters
+#'                        \describe{
+#'                          \item{prior_group_ability}{}
+#'                          \item{prior_person_ability}{}
+#'                          \item{prior_testlet_difficulty}{}
+#'                          \item{prior_item_difficulty}{}
+#'                        }
+#'                      \item posterior predictive distribution
+#'                        \describe{
+#'                          \item{y_rep}{predicted score for each observed
+#'                                       combination of group, person, and item}
+#'                        }
+#'                      \item log likelihoods
+#'                        \describe{
+#'                          \item{log_lik}{log likelihood of observed scores}
+#'                          \item{log_lik_rep}{log likelihood of predicted
+#'                                             scores}
+#'                        }
+#'                    }}
+#'     \item{loo}{a [loo::loo] object for `stanfit`}
+#'   }
+#' @name rdfit-class
+NULL
+
+#' @describeIn rdfit-class Create an `rdfit` object from normalised data.
 #' @importFrom dplyr arrange bind_rows dense_rank distinct inner_join mutate
 #' @importFrom rlang .data
 #' @importFrom tibble tibble
 #' @export
 new_rdfit <- function(cohorts,
-                      groups, person_groups, persons,
-                      testlets, item_testlets, items, max_scores, K = 0,
+                      groups, persons, person_groups,
+                      testlets, items, item_testlets, item_max_scores,
                       obs_group_cohorts, obs_groups, obs_group_items,
                       obs_group_scores,
                       obs_person_cohorts, obs_persons, obs_person_items,
                       obs_person_scores,
+                      k = 0,
                       ...) {
-        ## Make tidy tibbles and sort for Stan..
+        ## Make tidy tibbles and sort for Stan.
         groups <-
                 tibble(
                         stan_group = dense_rank(groups),
@@ -53,7 +137,7 @@ new_rdfit <- function(cohorts,
                         stan_item = dense_rank(items),
                         item = items,
                         testlet = item_testlets,
-                        max_score = max_scores
+                        max_score = item_max_scores
                 ) %>%
                 distinct() %>%
                 arrange(.data$stan_item)
@@ -72,10 +156,11 @@ new_rdfit <- function(cohorts,
                                 ##  to denote group observations.
                                 stan_person = -.data$stan_group,
                                 person = NA,
-                                .data$group),
-                        by = 'group'
+                                .data$group
+                        ),
+                        by = "group"
                 ) %>%
-                inner_join(items, by = 'item')
+                inner_join(items, by = "item")
         person_observations <-
                 tibble(
                         cohort = obs_person_cohorts,
@@ -83,8 +168,8 @@ new_rdfit <- function(cohorts,
                         item = obs_person_items,
                         obs_score = obs_person_scores,
                 ) %>%
-                inner_join(persons, by = 'person') %>%
-                inner_join(items, by = 'item')
+                inner_join(persons, by = "person") %>%
+                inner_join(items, by = "item")
         observations <- bind_rows(group_observations, person_observations)
         # Fit the model.
         stanfit <-
@@ -96,7 +181,7 @@ new_rdfit <- function(cohorts,
                                         N = nrow(persons),
                                         L = nrow(testlets),
                                         I = nrow(items),
-                                        K = K,
+                                        K = k,
                                         O = nrow(observations),
                                         mm = persons$stan_group,
                                         nn = observations$stan_person,
@@ -114,9 +199,19 @@ new_rdfit <- function(cohorts,
                         # The raw parameters are uninteresting.
                         pars =
                                 c(
-                                        'epsilon_raw', 'upsilon_raw',
-                                        'd_tau_raw', 'd_tau_err',
-                                        'xi_raw', 'zeta_raw'
+                                        "xi", "eta",
+                                        "epsilon", "delta", "tau",
+                                        "lambda",
+                                        "group_ability", "person_ability",
+                                        "testlet_difficulty", "item_difficulty",
+                                        "thresholds",
+                                        "prior_group_ability",
+                                        "prior_person_ability",
+                                        "prior_testlet_difficulty",
+                                        "prior_item_difficulty",
+                                        "y_rep",
+                                        "log_lik", "log_lik_rep",
+                                        "__lp"
                                 ),
                         include = FALSE,
                         ...
@@ -125,18 +220,20 @@ new_rdfit <- function(cohorts,
         structure(
                 .Data = stanfit,
                 loo = loo,
-                class = c('rdfit', 'stanfit')
+                class = c("rdfit", "stanfit")
         )
 }
 
-#' @importFrom dplyr as_tibble distinct transmute
+#' @describeIn rdfit-class Create an `rdfit` object from dimensional data.
+#' @importFrom dplyr as_tibble distinct filter transmute
 #' @importFrom rlang abort is_null
 #' @importFrom vctrs vec_cast vec_duplicate_any vec_equal_na
 rdfit <- function(data,
                   cohort = NULL,
                   group, person,
-                  testlet, item, max_score, K = 0,
+                  testlet, item, max_score,
                   obs_score,
+                  k = 0,
                   ...) {
         obs <-
                 ## rdfit objects return fit statistics as tibbles. If the data
@@ -146,29 +243,29 @@ rdfit <- function(data,
                 ## Skip column existence checks, because tibble will complain.
                 transmute(
                         ## Fill in a generic All cohort if necessary.
-                        cohort    =
+                        cohort =
                                 ifelse(
                                         is_null(cohort),
-                                        'All',
-                                        {{cohort}}
+                                        "All",
+                                        {{ cohort }}
                                 ),
-                        group     = {{group}},
-                        person    = {{person}},
-                        testlet   = {{testlet}},
-                        item      = {{item}},
+                        group = {{ group }},
+                        person = {{ person }},
+                        testlet = {{ testlet }},
+                        item = {{ item }},
                         ## Rasch models require integral scores, and vctrs
                         ## complains nicely.
                         max_score =
                                 vec_cast(
-                                        x = {{max_score}},
+                                        x = {{ max_score }},
                                         to = integer(),
-                                        x_arg = 'max_score'
+                                        x_arg = "max_score"
                                 ),
                         obs_score =
                                 vec_cast(
-                                        x = {{obs_score}},
+                                        x = {{ obs_score }},
                                         to = integer(),
-                                        x_arg = 'obs_score'
+                                        x_arg = "obs_score"
                                 )
                 ) %>%
                 ## Rasch models have no problem with missing observations, but
@@ -177,20 +274,20 @@ rdfit <- function(data,
         ## Stan will complain about invalid scores, but the messages will be
         ## opaque for R users.
         if (any(obs$max_score < 1)) {
-                abort('Some maximum scores are non-positive.')
+                abort("Some maximum scores are non-positive.")
         }
         if (any(obs$obs_score > obs$max_score)) {
-                abort('Some observed scores are greater than their maxima.')
+                abort("Some observed scores are greater than their maxima.")
         }
         ## Check for NAs and duplicates when preparing data for Stan. Stan's
         ## validation will catch these, but not with helpful messages.
         cohorts <- obs %>% distinct(.data$cohort)
         if (any(vec_equal_na(cohorts$cohort))) {
-                abort('Some cohorts are undefined.')
+                abort("Some cohorts are undefined.")
         }
         groups <- obs %>% distinct(.data$group)
         if (any(vec_equal_na(groups$group))) {
-                abort('Some groups are undefined.')
+                abort("Some groups are undefined.")
         }
         persons <-
                 obs %>%
@@ -200,29 +297,29 @@ rdfit <- function(data,
         ## will not be (i.e., NA persons are guaranteed to refer to group
         ## observations).
         if (vec_duplicate_any(persons$person)) {
-                abort('Some persons belong to multiple groups.')
+                abort("Some persons belong to multiple groups.")
         }
         testlets <- obs %>% distinct(.data$testlet)
         if (any(vec_equal_na(testlets$testlet))) {
-                abort('Some testlets are undefined.')
+                abort("Some testlets are undefined.")
         }
         items <- obs %>% distinct(.data$item, .data$testlet, .data$max_score)
         if (any(vec_equal_na(items$item))
-            || any(vec_equal_na(items$max_score))) {
-                abort('Some items are undefined.')
+        || any(vec_equal_na(items$max_score))) {
+                abort("Some items are undefined.")
         }
         if (vec_duplicate_any(items$item)) {
                 abort(
                         stringr::str_c(
-                                'Some items belong to multiple testlets ',
-                                'or have inconsistent max scores.'
-                                )
+                                "Some items belong to multiple testlets ",
+                                "or have inconsistent max scores."
+                        )
                 )
         }
         ## A negative integer is no serious problem for K (it simply fails to
         ## select any items for rating scale), but Stan needs it to be
         ## non-negative in order to set the dimension of tau.
-        K <- max(vec_cast(K, integer(), x_arg = 'K'), 0)
+        k <- max(vec_cast(k, integer(), x_arg = "k"), 0)
         ## The constructor asks for group and individual observations to be
         ## separated.
         group_obs <- obs %>% filter(vec_equal_na(.data$student))
@@ -233,7 +330,7 @@ rdfit <- function(data,
                 person_groups = persons$group, persons = persons$person,
                 testlets = testlets$testlet,
                 item_testlets = items$testlet, items = items$item,
-                max_scores = items$max_score, K = K,
+                max_scores = items$max_score,
                 obs_group_cohorts = group_obs$cohort,
                 obs_groups = group_obs$group,
                 obs_group_items = group_obs$item,
@@ -242,6 +339,7 @@ rdfit <- function(data,
                 obs_persons = person_obs$person,
                 obs_person_items = person_obs$item,
                 obs_person_scores = person_obs$score,
+                k = k,
                 ...
         )
 }
