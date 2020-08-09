@@ -2,10 +2,23 @@
 % Please edit documentation in R/rdfit.R
 \name{rdfit-class}
 \alias{rdfit-class}
-\alias{new_rdfit}
 \alias{rdfit}
+\alias{new_rdfit}
 \title{Fit a \code{raschdash} model}
 \usage{
+rdfit(
+  data,
+  cohort = NULL,
+  group,
+  person,
+  testlet,
+  item,
+  max_score,
+  obs_score,
+  k = 0,
+  ...
+)
+
 new_rdfit(
   cohorts,
   groups,
@@ -26,21 +39,31 @@ new_rdfit(
   k = 0,
   ...
 )
-
-rdfit(
-  data,
-  cohort = NULL,
-  group,
-  person,
-  testlet,
-  item,
-  max_score,
-  obs_score,
-  k = 0,
-  ...
-)
 }
 \arguments{
+\item{data}{a data frame with columns for cohort, group, person, testlet,
+item, maximum possible item score, and observed score. For
+group-level observations, the person should be \code{NA}.}
+
+\item{cohort}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> cohort column. Defaults to a
+generic \emph{All} cohort.}
+
+\item{group}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> group column}
+
+\item{person}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> person column}
+
+\item{testlet}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> testlet column}
+
+\item{item}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> item column}
+
+\item{max_score}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> maximum-score column}
+
+\item{obs_score}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> observed score column}
+
+\item{k}{maximum score of rating-scale items. Defaults to no rating scales.}
+
+\item{...}{additional parameters passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}}
+
 \item{cohorts}{vector of unique cohort identifiers}
 
 \item{groups}{vector of unique group identifiers}
@@ -63,29 +86,6 @@ cohorts (\code{obs_group_cohorts}), groups (\code{obs_groups}), items
 \item{obs_person_cohorts, obs_persons, obs_person_items, obs_person_scores}{for the person-level observations, vectors of the corresponding
 cohorts (\code{obs_person_cohorts}), persons (\code{obs_persons}), items
 (\code{obs_person_items}), and observed scores (\code{obs_person_scores})}
-
-\item{k}{maximum score of rating-scale items. Defaults to no rating scales.}
-
-\item{...}{additional parameters passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}}
-
-\item{data}{a data frame with columns for cohort, group, person, testlet,
-item, maximum possible item score, and observed score. For
-group-level observations, the person should be \code{NA}.}
-
-\item{cohort}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> cohort column. Defaults to a
-generic \emph{All} cohort.}
-
-\item{group}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> group column}
-
-\item{person}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> person column}
-
-\item{testlet}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> testlet column}
-
-\item{item}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> item column}
-
-\item{max_score}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> maximum-score column}
-
-\item{obs_score}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> observed score column}
 }
 \value{
 An \code{rdfit} object, which has the following attributes.
@@ -154,8 +154,8 @@ normalised, and Stan will throw rather cryptic error message if they are not.
 }
 \section{Functions}{
 \itemize{
-\item \code{new_rdfit}: Create an \code{rdfit} object from normalised data.
-
 \item \code{rdfit}: Create an \code{rdfit} object from dimensional data.
+
+\item \code{new_rdfit}: Create an \code{rdfit} object from normalised data.
 }}
 
