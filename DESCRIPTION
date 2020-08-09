@@ -24,9 +24,9 @@ Imports:
     rlang,
     rstan (>= 2.18.1),
     rstantools (>= 2.1.1),
-    stringr
+    stringr,
     tibble,
-    vctrs,
+    vctrs
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
