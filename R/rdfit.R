@@ -202,7 +202,7 @@ rdfit <- function(data,
 #' @describeIn rdfit-class Create an `rdfit` object from normalised data.
 #' @importFrom dplyr arrange bind_rows dense_rank distinct inner_join mutate
 #' @importFrom rlang .data
-#' @importFrom tibble tibble
+#' @importFrom tibble new_tibble tibble
 #' @export
 new_rdfit <- function(cohorts,
                       groups, persons, person_groups,
@@ -318,11 +318,11 @@ new_rdfit <- function(cohorts,
                         ...
                 )
         loo <- loo::loo(stanfit, save_psis = TRUE)
-        ## TODO: Find the tidyverse-standard solution for subclassing tibble.
-        structure(
+        ## TODO: Replace observations with posterior statistics.
+        new_tibble(
                 observations,
                 stanfit = stanfit,
                 loo = loo,
-                class = c("rdfit", class(observations))
+                class = "rdfit"
         )
 }
