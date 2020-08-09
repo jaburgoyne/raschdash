@@ -110,18 +110,18 @@ model {
 }
 
 generated quantities {
-        real<lower=0> gamma = inv_sqrt(square(psi) + square(phi));
-        vector[L] testlet_difficulty = gamma * epsilon;
-        real prior_testlet_difficulty = gamma * normal_rng(nu, theta_epsilon);
-        vector[I] item_difficulty = gamma * delta;
+        real<lower=0> lambda = inv_sqrt(square(psi) + square(phi));
+        vector[L] testlet_difficulty = lambda * epsilon;
+        real prior_testlet_difficulty = lambda * normal_rng(nu, theta_epsilon);
+        vector[I] item_difficulty = lambda * delta;
         real prior_item_difficulty =
-                prior_testlet_difficulty + gamma * normal_rng(0, theta_upsilon);
-        vector[K] thresholds = gamma * tau;
-        vector[M] group_ability = gamma * xi;
-        real prior_group_ability = gamma * normal_rng(0, psi);
-        vector[N] person_ability = gamma * eta;
+                prior_testlet_difficulty + lambda * normal_rng(0, theta_upsilon);
+        vector[K] thresholds = lambda * tau;
+        vector[M] group_ability = lambda * xi;
+        real prior_group_ability = lambda * normal_rng(0, psi);
+        vector[N] person_ability = lambda * eta;
         real prior_person_ability =
-                prior_group_ability + gamma * normal_rng(0, phi);
+                prior_group_ability + lambda * normal_rng(0, phi);
         // Expected ratings and entropies can be computed from
         // replications, but we need two prior versions, one with
         // persons freed and one with items freed.
