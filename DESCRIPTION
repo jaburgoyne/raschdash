@@ -16,6 +16,7 @@ Depends:
 Imports: 
     dplyr,
     lifecycle,
+    loo,
     magrittr,
     methods,
     Rcpp (>= 0.12.0),
@@ -23,10 +24,9 @@ Imports:
     rlang,
     rstan (>= 2.18.1),
     rstantools (>= 2.1.1),
+    stringr
     tibble,
     vctrs,
-    loo,
-    stringr
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
