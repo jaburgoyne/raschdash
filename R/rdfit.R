@@ -84,11 +84,12 @@
 NULL
 
 #' @describeIn rdfit-class Create an `rdfit` object from dimensional data.
-#' @importFrom dplyr as_tibble distinct filter transmute
+#' @importFrom dplyr as_tibble distinct filter if_else transmute
 #' @importFrom rlang abort is_null
 #' @importFrom vctrs vec_cast vec_duplicate_any vec_equal_na
+#' @export
 rdfit <- function(data,
-                  cohort = NULL,
+                  cohort = "All",
                   group, person,
                   testlet, item, max_score,
                   obs_score,
@@ -102,12 +103,7 @@ rdfit <- function(data,
                 ## Skip column existence checks, because tibble will complain.
                 transmute(
                         ## Fill in a generic All cohort if necessary.
-                        cohort =
-                                ifelse(
-                                        is_null(cohort),
-                                        "All",
-                                        {{ cohort }}
-                                ),
+                        cohort = {{ cohort }},
                         group = {{ group }},
                         person = {{ person }},
                         testlet = {{ testlet }},
@@ -151,7 +147,7 @@ rdfit <- function(data,
         persons <-
                 obs %>%
                 distinct(.data$person, .data$group) %>%
-                filter(is.na(person))
+                filter(!vec_equal_na(person))
         ## Persons may be NA because at this point in the function, the group
         ## will not be (i.e., NA persons are guaranteed to refer to group
         ## observations).
@@ -181,15 +177,15 @@ rdfit <- function(data,
         k <- max(vec_cast(k, integer(), x_arg = "k"), 0)
         ## The constructor asks for group and individual observations to be
         ## separated.
-        group_obs <- obs %>% filter(vec_equal_na(.data$student))
-        person_obs <- obs %>% filter(!vec_equal_na(.data$student))
+        group_obs <- obs %>% filter(vec_equal_na(.data$person))
+        person_obs <- obs %>% filter(!vec_equal_na(.data$person))
         new_rdfit(
                 cohorts = cohorts$cohort,
                 groups = groups$group,
                 person_groups = persons$group, persons = persons$person,
                 testlets = testlets$testlet,
                 item_testlets = items$testlet, items = items$item,
-                max_scores = items$max_score,
+                item_max_scores = items$max_score,
                 obs_group_cohorts = group_obs$cohort,
                 obs_groups = group_obs$group,
                 obs_group_items = group_obs$item,
@@ -197,7 +193,7 @@ rdfit <- function(data,
                 obs_person_cohorts = person_obs$cohort,
                 obs_persons = person_obs$person,
                 obs_person_items = person_obs$item,
-                obs_person_scores = person_obs$score,
+                obs_person_scores = person_obs$obs_score,
                 k = k,
                 ...
         )
@@ -232,6 +228,7 @@ new_rdfit <- function(cohorts,
                         group = person_groups
                 ) %>%
                 distinct() %>%
+                inner_join(groups, by = "group") %>%
                 arrange(.data$stan_person)
         testlets <-
                 tibble(
@@ -247,6 +244,7 @@ new_rdfit <- function(cohorts,
                         max_score = item_max_scores
                 ) %>%
                 distinct() %>%
+                inner_join(testlets, by = "testlet") %>%
                 arrange(.data$stan_item)
         # Collate observations for Stan.
         group_observations <-
@@ -271,7 +269,7 @@ new_rdfit <- function(cohorts,
         person_observations <-
                 tibble(
                         cohort = obs_person_cohorts,
-                        group = obs_persons,
+                        person = obs_persons,
                         item = obs_person_items,
                         obs_score = obs_person_scores,
                 ) %>%

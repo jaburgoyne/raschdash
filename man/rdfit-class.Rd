@@ -8,7 +8,7 @@
 \usage{
 rdfit(
   data,
-  cohort = NULL,
+  cohort = "All",
   group,
   person,
   testlet,
