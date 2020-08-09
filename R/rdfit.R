@@ -302,29 +302,27 @@ new_rdfit <- function(cohorts,
                         # a high adapt_delta.
                         control = list(adapt_delta = 0.99),
                         # The raw parameters are uninteresting.
-                        pars =
-                                c(
-                                        "xi", "eta",
-                                        "epsilon", "delta", "tau",
-                                        "lambda",
-                                        "group_ability", "person_ability",
-                                        "testlet_difficulty", "item_difficulty",
-                                        "thresholds",
-                                        "prior_group_ability",
-                                        "prior_person_ability",
-                                        "prior_testlet_difficulty",
-                                        "prior_item_difficulty",
-                                        "y_rep",
-                                        "log_lik", "log_lik_rep",
-                                        "__lp"
-                                ),
-                        include = FALSE,
+                        pars = c(
+                                "xi", "eta", "epsilon", "delta", "tau",
+                                "lambda",
+                                "group_ability", "person_ability",
+                                "testlet_difficulty", "item_difficulty",
+                                "thresholds",
+                                "y_rep",
+                                "prior_group_ability",
+                                "prior_person_ability",
+                                "prior_testlet_difficulty",
+                                "prior_item_difficulty",
+                                "log_lik", "log_lik_rep"
+                        ),
                         ...
                 )
         loo <- loo::loo(stanfit, save_psis = TRUE)
+        ## TODO: Find the tidyverse-standard solution for subclassing tibble.
         structure(
-                .Data = stanfit,
+                observations,
+                stanfit = stanfit,
                 loo = loo,
-                class = c("rdfit", "stanfit")
+                class = c("rdfit", class(observations))
         )
 }
