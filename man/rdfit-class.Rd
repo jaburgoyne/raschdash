@@ -88,69 +88,66 @@ cohorts (\code{obs_person_cohorts}), persons (\code{obs_persons}), items
 (\code{obs_person_items}), and observed scores (\code{obs_person_scores})}
 }
 \value{
-An \code{rdfit} object, which has the following attributes.
+An object of class \code{rdfit} with the following attributes.
 \describe{
-\item{stanfit}{the \link[rstan:stanfit-class]{rstan::stanfit} object for the fitted
-model. It contains samples of the following parameters.
+\item{\code{stanfit}}{
+The \link[rstan:stanfit-class]{rstan::stanfit} object for the fitted model. It contains samples of
+the following parameters.
 \itemize{
 \item logit-scale parameters
-\describe{
-\item{xi}{group abilities}
-\item{eta}{person abilities}
-\item{epsilon}{testlet difficulties}
-\item{delta}{item difficulties}
-\item{tau}{rating-scale threshold offsets from
-overall item difficulty (if any
-rating-scale items are present)}
-\item{lambda}{standard deviation of person
-abilities. Used to transform the
-logit scale to the standard scale.}
+\itemize{
+\item \code{xi}: group abilities
+\item \code{eta}: person abilities
+\item \code{epsilon}: testlet difficulties
+\item \code{delta}: item difficulties
+\item \code{tau}: rating-scale threshold offsets from overall item
+difficulty (if any rating-scale items are present)
+\item \code{lambda}: standard deviation of person abilities. Used to
+transform the logit scale to the standard scale.
 }
 \item standard-scale parameters
-\describe{
-\item{group_ability}{group abilities}
-\item{person_ability}{person abilities}
-\item{testlet_difficulty}{testlet difficulties}
-\item{item_difficulty}{item difficulties}
-\item{thresholds}{rating-scale threshold offsets
-from overall item difficulty (if
-any rating-scale items are
-present)}
-}
-\item standard-scale parameters under their prior
-distribution given the posterior distribution of
-the hyper-parameters
-\describe{
-\item{prior_group_ability}{}
-\item{prior_person_ability}{}
-\item{prior_testlet_difficulty}{}
-\item{prior_item_difficulty}{}
+\itemize{
+\item \code{group_ability}: group abilities
+\item \code{person_ability}: person abilities
+\item \code{testlet_difficulty}: testlet difficulties
+\item \code{item_difficulty}: item difficulties
+\item \code{thresholds}: rating-scale threshold offsets from overall item
+difficulty (if any rating-scale items are
+present)
 }
 \item posterior predictive distribution
-\describe{
-\item{y_rep}{predicted score for each observed
-combination of group, person, and item}
+\itemize{
+\item \code{y_rep}: predicted score for each observed combination of
+group, person, and item
+\item \code{prior_group_ability} (sampled under posterior hyper-parameters)
+\item \code{prior_person_ability} (sampled under posterior hyper-parameters)
+\item \code{prior_testlet_difficulty} (sampled under posterior hyper-parameters)
+\item \code{prior_item_difficulty} (sampled under posterior hyper-parameters)
 }
 \item log likelihoods
-\describe{
-\item{log_lik}{log likelihood of observed scores}
-\item{log_lik_rep}{log likelihood of predicted
-scores}
+\itemize{
+\item \code{log_lik}: log likelihood of observed scores
+\item \code{log_lik_rep}: log likelihood of predicted scores
 }
-}}
-\item{loo}{a \link[loo:loo]{loo::loo} object for \code{stanfit}}
+}
+}
+
+\item{\code{loo}}{
+A \link[loo:loo]{loo::loo} object for \code{stanfit}.
+}
 }
 }
 \description{
 Create \code{rdfit} objects from observed data.
 }
 \details{
-The \code{rdfit} function is intended to be the primary method for users to create
-\code{rdfit} objects. Most R users work with so-called \emph{dimensional data} in a
-single data frame. In the case that the data are alread stored in a
-normalised form, however, the raw \code{new_rdfit} constructor will work. Be
-aware that \code{new_rdfit} does not validate whether the data are properly
-normalised, and Stan will throw rather cryptic error message if they are not.
+The \code{rdfit()} function is intended to be the primary method for users to create
+\code{rdfit} objects. Most R users work with denormalised \emph{dimensional data} in a
+single data frame. In the case that the data are already stored in a
+normalised structure, however, the raw \code{new_rdfit()} constructor will work.
+The \code{new_rdfit()} constructor does not validate whether the data are properly
+normalised, however, and Stan will throw sometimes cryptic error messages if
+they are not.
 }
 \section{Functions}{
 \itemize{
