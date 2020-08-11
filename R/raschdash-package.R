@@ -13,3 +13,7 @@
 #' @importFrom lifecycle deprecate_soft
 ## usethis namespace: end
 NULL
+
+# To silence notes about `.` in pipes.
+# See https://github.com/tidyverse/magrittr/issues/29
+utils::globalVariables(".")

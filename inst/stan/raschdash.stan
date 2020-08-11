@@ -22,7 +22,7 @@ data {
         // J is reserved for facets in a future implementation
         int<lower=0> K;               // max score on rating scale
         int<lower=1> M;               // number of groups
-        int<lower=1> N;               // number of person
+        int<lower=1> N;               // number of persons
         int<lower=1> O;               // number of observations
         int<lower=1,upper=M> mm[N];   // group for person n
         int<lower=-M,upper=N> nn[O];  // person for observation m
@@ -62,11 +62,11 @@ transformed parameters {
         vector[K] tau;
         vector[M] xi;
         vector[N] eta;
-        epsilon = nu + theta_epsilon * epsilon_raw;
+        epsilon = L == 1 ? [nu]' : nu + theta_epsilon * epsilon_raw;
         delta = epsilon[ll] + theta_upsilon * upsilon_raw;
         if (K == 1) {
                 tau = [0]';
-        } else {
+        } else if (K > 1) {
                 // Our prior is that thresholds should be ascending,
                 // but disordered thresholds are possible. Use the
                 // traditional log(2) separation requirement
@@ -77,7 +77,7 @@ transformed parameters {
                 // Centre between the last two thresholds.
                 tau = tau_raw - tau_raw[K] + 0.5 * d_tau[K-1];
         }
-        xi = psi * xi_raw;
+        xi = M == 1 ? [0]' : psi * xi_raw;
         eta = xi[mm] + phi * zeta_raw;
 }
 
@@ -110,15 +110,19 @@ model {
 }
 
 generated quantities {
-        real<lower=0> lambda = inv_sqrt(square(psi) + square(phi));
+        real<lower=0> lambda =
+                M == 1
+                ? inv(phi)
+                : inv_sqrt(square(psi) + square(phi));
         vector[L] testlet_difficulty = lambda * epsilon;
-        real prior_testlet_difficulty = lambda * normal_rng(nu, theta_epsilon);
+        real prior_testlet_difficulty =
+                L == 1 ? lambda * nu : lambda * normal_rng(nu, theta_epsilon);
         vector[I] item_difficulty = lambda * delta;
         real prior_item_difficulty =
                 prior_testlet_difficulty + lambda * normal_rng(0, theta_upsilon);
         vector[K] thresholds = lambda * tau;
         vector[M] group_ability = lambda * xi;
-        real prior_group_ability = lambda * normal_rng(0, psi);
+        real prior_group_ability = M == 1 ? 0 : lambda * normal_rng(0, psi);
         vector[N] person_ability = lambda * eta;
         real prior_person_ability =
                 prior_group_ability + lambda * normal_rng(0, phi);

@@ -9,9 +9,9 @@
 rdfit(
   data,
   cohort = "All",
-  group,
+  group = "All",
   person,
-  testlet,
+  testlet = "All",
   item,
   max_score,
   obs_score,
@@ -48,11 +48,13 @@ group-level observations, the person should be \code{NA}.}
 \item{cohort}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> cohort column. Defaults to a
 generic \emph{All} cohort.}
 
-\item{group}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> group column}
+\item{group}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> group column. Defaults to a
+generic \emph{All} group.}
 
 \item{person}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> person column}
 
-\item{testlet}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> testlet column}
+\item{testlet}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> testlet column. Defaults to a
+generic \emph{All} testlet.}
 
 \item{item}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> item column}
 

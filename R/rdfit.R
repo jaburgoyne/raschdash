@@ -15,9 +15,11 @@
 #'             group-level observations, the person should be `NA`.
 #' @param cohort <[tidyr::tidyr_tidy_select]> cohort column. Defaults to a
 #'               generic *All* cohort.
-#' @param group <[tidyr::tidyr_tidy_select]> group column
+#' @param group <[tidyr::tidyr_tidy_select]> group column. Defaults to a
+#'              generic *All* group.
 #' @param person <[tidyr::tidyr_tidy_select]> person column
-#' @param testlet <[tidyr::tidyr_tidy_select]> testlet column
+#' @param testlet <[tidyr::tidyr_tidy_select]> testlet column. Defaults to a
+#'                generic *All* testlet.
 #' @param item <[tidyr::tidyr_tidy_select]> item column
 #' @param max_score <[tidyr::tidyr_tidy_select]> maximum-score column
 #' @param obs_score <[tidyr::tidyr_tidy_select]> observed score column
@@ -90,8 +92,8 @@ NULL
 #' @export
 rdfit <- function(data,
                   cohort = "All",
-                  group, person,
-                  testlet, item, max_score,
+                  group = "All", person,
+                  testlet = "All", item, max_score,
                   obs_score,
                   k = 0,
                   ...) {
@@ -201,8 +203,13 @@ rdfit <- function(data,
 
 #' @describeIn rdfit-class Create an `rdfit` object from normalised data.
 #' @importFrom dplyr arrange bind_rows dense_rank distinct inner_join mutate
+#' @importFrom dplyr select
+#' @importFrom loo E_loo
+#' @importFrom magrittr divide_by subtract
+#' @importFrom purrr pluck quietly
 #' @importFrom rlang .data
 #' @importFrom tibble new_tibble tibble
+#' @importFrom vctrs vec_cast
 #' @export
 new_rdfit <- function(cohorts,
                       groups, persons, person_groups,
@@ -213,7 +220,7 @@ new_rdfit <- function(cohorts,
                       obs_person_scores,
                       k = 0,
                       ...) {
-        ## Make tidy tibbles and sort for Stan.
+        ## Make tidy tibbles and sort for reliable indexing inside Stan.
         groups <-
                 tibble(
                         stan_group = dense_rank(groups),
@@ -246,7 +253,7 @@ new_rdfit <- function(cohorts,
                 distinct() %>%
                 inner_join(testlets, by = "testlet") %>%
                 arrange(.data$stan_item)
-        # Collate observations for Stan.
+        ## Collate observations for Stan.
         group_observations <-
                 tibble(
                         cohort = obs_group_cohorts,
@@ -260,7 +267,7 @@ new_rdfit <- function(cohorts,
                                 ## The Stan model uses negative integers
                                 ##  to denote group observations.
                                 stan_person = -.data$stan_group,
-                                person = NA,
+                                person = vec_cast(NA, to = obs_persons),
                                 .data$group
                         ),
                         by = "group"
@@ -276,7 +283,7 @@ new_rdfit <- function(cohorts,
                 inner_join(persons, by = "person") %>%
                 inner_join(items, by = "item")
         observations <- bind_rows(group_observations, person_observations)
-        # Fit the model.
+        ## Fit the model.
         stanfit <-
                 rstan::sampling(
                         stanmodels$raschdash,
@@ -318,11 +325,78 @@ new_rdfit <- function(cohorts,
                         ...
                 )
         loo <- loo::loo(stanfit, save_psis = TRUE)
+        ## Compute the posterior statistics.
+        pp_stats <-
+                observations %>%
+                mutate(
+                        expected_score =
+                                stanfit %>%
+                                as.matrix("y_rep") %>%
+                                ## E_loo issues annoying Pareto-k warnings.
+                                (quietly(E_loo))(loo$psis_object) %>%
+                                pluck("result", "value"),
+                        self_information =
+                                loo %>%
+                                pluck("pointwise") %>%
+                                as_tibble() %>%
+                                pluck("elpd_loo") %>%
+                                (function(p) -p / log(2)),
+                        entropy =
+                                stanfit %>%
+                                as.matrix("log_lik_rep") %>%
+                                ## E_loo issues annoying Pareto-k warnings.
+                                (quietly(E_loo))(loo$psis_object) %>%
+                                pluck("result", "value") %>%
+                                divide_by(-log(2)),
+                        p_score =
+                                as.matrix(stanfit, "y_rep") %>%
+                                subtract(
+                                        matrix(
+                                                data = observations$obs_score,
+                                                nrow = nrow(.),
+                                                ncol = ncol(.),
+                                                byrow = TRUE
+                                        ),
+                                        .
+                                ) %>%
+                                ## Use Gelman et al.'s (2013) 'mid' p-value.
+                                (function(x) 0.5 * sign(x) + 0.5) %>%
+                                ## E_loo issues annoying Pareto-k warnings.
+                                (quietly(E_loo))(loo$psis_object) %>%
+                                pluck("result", "value"),
+                        ## Subtract log_lik from log_lik_rep because this is
+                        ## about information, which is -log_lik_rep subtracted
+                        ## from -log_lik.
+                        p_information =
+                                stanfit %>%
+                                as.matrix("log_lik_rep") %>%
+                                subtract(as.matrix(stanfit, "log_lik")) %>%
+                                ## Use Gelman et al.'s (2013) 'mid' p-value.
+                                (function(x) 0.5 * sign(x) + 0.5) %>%
+                                ## E_loo issues annoying Pareto-k warnings.
+                                (quietly(E_loo))(loo$psis_object) %>%
+                                pluck("result", "value")
+                ) %>%
+                select(
+                        .data$cohort,
+                        .data$group, .data$person,
+                        .data$testlet, .data$item, .data$max_score,
+                        .data$obs_score, .data$expected_score,.data$p_score,
+                        .data$self_information, .data$entropy,
+                        .data$p_information
+                )
         ## TODO: Replace observations with posterior statistics.
         new_tibble(
-                observations,
+                x = pp_stats,
                 stanfit = stanfit,
                 loo = loo,
+                stan_ids =
+                        list(
+                                groups = groups$group,
+                                persons = persons$person,
+                                testlets = testlets$testlet,
+                                items = items$item
+                        ),
                 class = "rdfit"
         )
 }
