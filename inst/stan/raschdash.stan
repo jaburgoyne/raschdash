@@ -20,7 +20,7 @@ data {
         int<lower=1> L;               // number of testlets
         int<lower=1> I;               // number of items
         // J is reserved for facets in a future implementation
-        int<lower=0> K;               // max score on rating scale
+        int<lower=1> K;               // max score on rating scale
         int<lower=1> M;               // number of groups
         int<lower=1> N;               // number of persons
         int<lower=1> O;               // number of observations
@@ -31,7 +31,7 @@ data {
         int<lower=1,upper=I> ii[O];   // item for observation o
         int<lower=1> kk[I];           // maximum score for item i
                                       //   Rasch if 1
-                                      //   rating scale if K
+                                      //   rating scale if K (and K > 1)
                                       //   binomial otherwise
                                       //   TODO: Add more flixible typing.
         int<lower=0> y[O];            // score for observation o
@@ -40,20 +40,19 @@ data {
 parameters {
         // The parameters are mostly in LISREL notation, with some abuse
         // of ν, δ, ε, and θ for items and testlets.
-        real nu;                        // mean difficulty
-        vector[L] epsilon_raw;          // relative difficulty for testlet l
-        vector[I] upsilon_raw;          // relative difficulty for item i
-        vector[K > 1] d_tau_raw;        // spacing of last two thresholds.
-                                        //   Vanishes if no rating scales.
-        vector[max(0, K-2)] d_tau_err;  // relative spacing for threshold t.
-                                        //   Vanishes if no rating scales
-                                        //   or a single threshold.
-        vector[M] xi_raw;               // ability for group j
-        vector[N] zeta_raw;             // relative ability for person n
-        real<lower=0> theta_epsilon;    // scale of testlet difficulties
-        real<lower=0> theta_upsilon;    // scale of relative item difficulties
-        real<lower=0> psi;              // scale of group abilities
-        real<lower=0> phi;              // scale of relative person abilities
+        real nu;                         // mean difficulty
+        vector[L] epsilon_raw;           // relative difficulty for testlet l
+        vector[I] upsilon_raw;           // relative difficulty for item i
+        real d_tau_raw;                  // spacing of last two thresholds.
+        vector[max(0, K-2)] d_tau_err;   // relative spacing for threshold t.
+                                         //   Vanishes if no rating scales
+                                         //   or less than two thresholds.
+        vector[M] xi_raw;                // ability for group j
+        vector[N] zeta_raw;              // relative ability for person n
+        real<lower=0> theta_epsilon_raw; // scale of testlet difficulties
+        real<lower=0> theta_upsilon;     // scale of relative item difficulties
+        real<lower=0> psi_raw;           // scale of group abilities
+        real<lower=0> phi;               // scale of relative person abilities
 }
 
 transformed parameters {
@@ -62,7 +61,9 @@ transformed parameters {
         vector[K] tau;
         vector[M] xi;
         vector[N] eta;
-        epsilon = L == 1 ? [nu]' : nu + theta_epsilon * epsilon_raw;
+        real theta_epsilon = L == 1 ? 0 : theta_epsilon_raw;
+        real psi = M == 1 ? 0 : psi_raw;
+        epsilon = nu + theta_epsilon * epsilon_raw;
         delta = epsilon[ll] + theta_upsilon * upsilon_raw;
         if (K == 1) {
                 tau = [0]';
@@ -72,12 +73,12 @@ transformed parameters {
                 // traditional log(2) separation requirement
                 // (Linacre, 2002) as a prior mean.
                 vector[K-1] d_tau =
-                        log(2) + d_tau_raw[1] + append_row(d_tau_err, 0);
+                        log(2) + d_tau_raw + append_row(d_tau_err, 0);
                 vector[K] tau_raw = cumulative_sum(append_row(0, d_tau));
                 // Centre between the last two thresholds.
-                tau = tau_raw - tau_raw[K] + 0.5 * d_tau[K-1];
+                tau = tau_raw - tau_raw[K] + 0.5 * d_tau_raw;
         }
-        xi = M == 1 ? [0]' : psi * xi_raw;
+        xi = psi * xi_raw;
         eta = xi[mm] + phi * zeta_raw;
 }
 
@@ -87,22 +88,25 @@ model {
         // essentially the same result. The Nuffic distribution
         // is closer to t_10, which allows for some outliers, but it runs
         // slower and fits equivalently to the standard normal.
-        nu             ~ std_normal();
-        epsilon_raw    ~ std_normal();
-        upsilon_raw    ~ std_normal();
-        d_tau_raw      ~ std_normal();
-        d_tau_err      ~ std_normal();
-        xi_raw         ~ std_normal();
-        zeta_raw       ~ std_normal();
-        theta_epsilon  ~ std_normal();
-        theta_upsilon  ~ std_normal();
-        psi            ~ std_normal();
-        phi            ~ std_normal();
+        nu                ~ std_normal();
+        epsilon_raw       ~ std_normal();
+        upsilon_raw       ~ std_normal();
+        d_tau_raw         ~ std_normal();
+        d_tau_err         ~ std_normal();
+        xi_raw            ~ std_normal();
+        zeta_raw          ~ std_normal();
+        theta_epsilon_raw ~ std_normal();
+        theta_upsilon     ~ std_normal();
+        psi_raw           ~ std_normal();
+        phi               ~ std_normal();
         for (o in 1:O) {
                 int i = ii[o];
                 int k = kk[i];
                 int n = nn[o];
                 real beta = (n < 0 ? xi[-n] : eta[n]) - delta[i];
+                // When K == 1, using the rsm function is correct but
+                // inefficient. Checking for k == 1 first routes these items
+                // to the built-in bernoulli_logit().
                 if (k == 1)      y[o] ~ bernoulli_logit(beta);
                 else if (k == K) y[o] ~ rsm(beta - tau);
                 else             y[o] ~ binomial_logit(k, beta);
@@ -110,19 +114,16 @@ model {
 }
 
 generated quantities {
-        real<lower=0> lambda =
-                M == 1
-                ? inv(phi)
-                : inv_sqrt(square(psi) + square(phi));
+        real<lower=0> lambda = inv_sqrt(square(psi) + square(phi));
         vector[L] testlet_difficulty = lambda * epsilon;
-        real prior_testlet_difficulty =
-                L == 1 ? lambda * nu : lambda * normal_rng(nu, theta_epsilon);
+        real prior_testlet_difficulty = lambda * normal_rng(nu, theta_epsilon);
         vector[I] item_difficulty = lambda * delta;
         real prior_item_difficulty =
-                prior_testlet_difficulty + lambda * normal_rng(0, theta_upsilon);
+                prior_testlet_difficulty
+                + lambda * normal_rng(0, theta_upsilon);
         vector[K] thresholds = lambda * tau;
         vector[M] group_ability = lambda * xi;
-        real prior_group_ability = M == 1 ? 0 : lambda * normal_rng(0, psi);
+        real prior_group_ability = lambda * normal_rng(0, psi);
         vector[N] person_ability = lambda * eta;
         real prior_person_ability =
                 prior_group_ability + lambda * normal_rng(0, phi);

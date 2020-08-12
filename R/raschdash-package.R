@@ -12,8 +12,8 @@
 #' @importFrom magrittr %>%
 #' @importFrom lifecycle deprecate_soft
 ## usethis namespace: end
+#
+# As part of using pipes everywhere, we also need .data.
+#
+#' @importFrom rlang .data
 NULL
-
-# To silence notes about `.` in pipes.
-# See https://github.com/tidyverse/magrittr/issues/29
-utils::globalVariables(".")

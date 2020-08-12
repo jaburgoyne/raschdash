@@ -15,7 +15,7 @@ rdfit(
   item,
   max_score,
   obs_score,
-  k = 0,
+  k = 1,
   ...
 )
 
@@ -36,7 +36,7 @@ new_rdfit(
   obs_persons,
   obs_person_items,
   obs_person_scores,
-  k = 0,
+  k = 1,
   ...
 )
 }

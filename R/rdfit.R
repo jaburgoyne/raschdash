@@ -86,24 +86,21 @@
 NULL
 
 #' @describeIn rdfit-class Create an `rdfit` object from dimensional data.
-#' @importFrom dplyr as_tibble distinct filter if_else transmute
-#' @importFrom rlang abort is_null
-#' @importFrom vctrs vec_cast vec_duplicate_any vec_equal_na
 #' @export
 rdfit <- function(data,
                   cohort = "All",
                   group = "All", person,
                   testlet = "All", item, max_score,
                   obs_score,
-                  k = 0,
+                  k = 1,
                   ...) {
         obs <-
                 ## rdfit objects return fit statistics as tibbles. If the data
                 ## cannot be represented as a tibble, then the tidverse errors
                 ## (or warnings) are all that is necessary.
-                as_tibble(data) %>%
+                dplyr::as_tibble(data) %>%
                 ## Skip column existence checks, because tibble will complain.
-                transmute(
+                dplyr::transmute(
                         ## Fill in a generic All cohort if necessary.
                         cohort = {{ cohort }},
                         group = {{ group }},
@@ -113,13 +110,13 @@ rdfit <- function(data,
                         ## Rasch models require integral scores, and vctrs
                         ## complains nicely.
                         max_score =
-                                vec_cast(
+                                vctrs::vec_cast(
                                         x = {{ max_score }},
                                         to = integer(),
                                         x_arg = "max_score"
                                 ),
                         obs_score =
-                                vec_cast(
+                                vctrs::vec_cast(
                                         x = {{ obs_score }},
                                         to = integer(),
                                         x_arg = "obs_score"
@@ -127,46 +124,48 @@ rdfit <- function(data,
                 ) %>%
                 ## Rasch models have no problem with missing observations, but
                 ## Stan does not want to see them.
-                filter(!vec_equal_na(obs_score))
+                dplyr::filter(!vctrs::vec_equal_na(obs_score))
         ## Stan will complain about invalid scores, but the messages will be
         ## opaque for R users.
         if (any(obs$max_score < 1)) {
-                abort("Some maximum scores are non-positive.")
+                rlang::abort("Some maximum scores are non-positive.")
         }
         if (any(obs$obs_score > obs$max_score)) {
-                abort("Some observed scores are greater than their maxima.")
+                rlang::abort(
+                        "Some observed scores are greater than their maxima."
+                )
         }
         ## Check for NAs and duplicates when preparing data for Stan. Stan's
         ## validation will catch these, but not with helpful messages.
         cohorts <- obs %>% distinct(.data$cohort)
-        if (any(vec_equal_na(cohorts$cohort))) {
-                abort("Some cohorts are undefined.")
+        if (any(vctrs::vec_equal_na(cohorts$cohort))) {
+                rlang::abort("Some cohorts are undefined.")
         }
         groups <- obs %>% distinct(.data$group)
-        if (any(vec_equal_na(groups$group))) {
-                abort("Some groups are undefined.")
+        if (any(vctrs::vec_equal_na(groups$group))) {
+                rlang::abort("Some groups are undefined.")
         }
         persons <-
                 obs %>%
-                distinct(.data$person, .data$group) %>%
-                filter(!vec_equal_na(person))
+                dplyr::distinct(.data$person, .data$group) %>%
+                dplyr::filter(!vctrs::vec_equal_na(person))
         ## Persons may be NA because at this point in the function, the group
         ## will not be (i.e., NA persons are guaranteed to refer to group
         ## observations).
-        if (vec_duplicate_any(persons$person)) {
-                abort("Some persons belong to multiple groups.")
+        if (vctrs::vec_duplicate_any(persons$person)) {
+                rlang::abort("Some persons belong to multiple groups.")
         }
         testlets <- obs %>% distinct(.data$testlet)
-        if (any(vec_equal_na(testlets$testlet))) {
-                abort("Some testlets are undefined.")
+        if (any(vctrs::vec_equal_na(testlets$testlet))) {
+                rlang::abort("Some testlets are undefined.")
         }
         items <- obs %>% distinct(.data$item, .data$testlet, .data$max_score)
-        if (any(vec_equal_na(items$item))
-        || any(vec_equal_na(items$max_score))) {
-                abort("Some items are undefined.")
+        if (any(vctrs::vec_equal_na(items$item))
+        || any(vctrs::vec_equal_na(items$max_score))) {
+                rlang::abort("Some items are undefined.")
         }
-        if (vec_duplicate_any(items$item)) {
-                abort(
+        if (vctrs::vec_duplicate_any(items$item)) {
+                rlang::abort(
                         stringr::str_c(
                                 "Some items belong to multiple testlets ",
                                 "or have inconsistent max scores."
@@ -176,11 +175,11 @@ rdfit <- function(data,
         ## A negative integer is no serious problem for K (it simply fails to
         ## select any items for rating scale), but Stan needs it to be
         ## non-negative in order to set the dimension of tau.
-        k <- max(vec_cast(k, integer(), x_arg = "k"), 0)
+        k <- max(vctrs::vec_cast(k, integer(), x_arg = "k"), 1)
         ## The constructor asks for group and individual observations to be
         ## separated.
-        group_obs <- obs %>% filter(vec_equal_na(.data$person))
-        person_obs <- obs %>% filter(!vec_equal_na(.data$person))
+        group_obs <- obs %>% filter(vctrs::vec_equal_na(.data$person))
+        person_obs <- obs %>% filter(!vctrs::vec_equal_na(.data$person))
         new_rdfit(
                 cohorts = cohorts$cohort,
                 groups = groups$group,
@@ -202,14 +201,6 @@ rdfit <- function(data,
 }
 
 #' @describeIn rdfit-class Create an `rdfit` object from normalised data.
-#' @importFrom dplyr arrange bind_rows dense_rank distinct inner_join mutate
-#' @importFrom dplyr select
-#' @importFrom loo E_loo
-#' @importFrom magrittr divide_by subtract
-#' @importFrom purrr pluck quietly
-#' @importFrom rlang .data
-#' @importFrom tibble new_tibble tibble
-#' @importFrom vctrs vec_cast
 #' @export
 new_rdfit <- function(cohorts,
                       groups, persons, person_groups,
@@ -218,71 +209,80 @@ new_rdfit <- function(cohorts,
                       obs_group_scores,
                       obs_person_cohorts, obs_persons, obs_person_items,
                       obs_person_scores,
-                      k = 0,
+                      k = 1,
                       ...) {
         ## Make tidy tibbles and sort for reliable indexing inside Stan.
         groups <-
-                tibble(
-                        stan_group = dense_rank(groups),
+                dplyr::tibble(
+                        stan_group = dplyr::dense_rank(groups),
                         group = groups
                 ) %>%
-                distinct() %>%
-                arrange(.data$stan_group)
+                dplyr::distinct() %>%
+                dplyr::arrange(.data$stan_group)
         persons <-
-                tibble(
-                        stan_person = dense_rank(persons),
+                dplyr::tibble(
+                        stan_person = dplyr::dense_rank(persons),
                         person = persons,
                         group = person_groups
                 ) %>%
-                distinct() %>%
-                inner_join(groups, by = "group") %>%
-                arrange(.data$stan_person)
+                dplyr::distinct() %>%
+                dplyr::inner_join(groups, by = "group") %>%
+                dplyr::arrange(.data$stan_person)
         testlets <-
-                tibble(
-                        stan_testlet = dense_rank(testlets),
+                dplyr::tibble(
+                        stan_testlet = dplyr::dense_rank(testlets),
                         testlet = testlets
                 ) %>%
-                arrange(.data$stan_testlet)
+                dplyr::arrange(.data$stan_testlet)
         items <-
-                tibble(
-                        stan_item = dense_rank(items),
+                dplyr::tibble(
+                        stan_item = dplyr::dense_rank(items),
                         item = items,
                         testlet = item_testlets,
                         max_score = item_max_scores
                 ) %>%
-                distinct() %>%
-                inner_join(testlets, by = "testlet") %>%
-                arrange(.data$stan_item)
+                dplyr::distinct() %>%
+                dplyr::inner_join(testlets, by = "testlet") %>%
+                dplyr::arrange(.data$stan_item)
         ## Collate observations for Stan.
         group_observations <-
-                tibble(
+                dplyr::tibble(
                         cohort = obs_group_cohorts,
                         group = obs_groups,
                         item = obs_group_items,
-                        obs_score = obs_group_scores,
+                        observed_score = obs_group_scores,
                 ) %>%
-                inner_join(
-                        mutate(
+                dplyr::inner_join(
+                        dplyr::mutate(
                                 groups,
                                 ## The Stan model uses negative integers
                                 ##  to denote group observations.
                                 stan_person = -.data$stan_group,
-                                person = vec_cast(NA, to = obs_persons),
+                                person = vctrs::vec_cast(NA, to = obs_persons),
                                 .data$group
                         ),
                         by = "group"
                 ) %>%
-                inner_join(items, by = "item")
+                dplyr::inner_join(items, by = "item")
         person_observations <-
-                tibble(
+                dplyr::tibble(
                         cohort = obs_person_cohorts,
                         person = obs_persons,
                         item = obs_person_items,
-                        obs_score = obs_person_scores,
+                        observed_score = obs_person_scores,
                 ) %>%
-                inner_join(persons, by = "person") %>%
-                inner_join(items, by = "item")
-        observations <- bind_rows(group_observations, person_observations)
+                dplyr::inner_join(persons, by = "person") %>%
+                dplyr::inner_join(items, by = "item")
+        observations <-
+                dplyr::bind_rows(group_observations, person_observations) %>%
+                dplyr::select(
+                        .data$cohort,
+                        .data$stan_group, .data$group,
+                        .data$stan_person, .data$person,
+                        .data$stan_testlet, .data$testlet,
+                        .data$stan_item, .data$item,
+                        .data$max_score, .data$observed_score
+                )
         ## Fit the model.
         stanfit <-
                 rstan::sampling(
@@ -300,12 +300,12 @@ new_rdfit <- function(cohorts,
                                         ll = items$stan_testlet,
                                         ii = observations$stan_item,
                                         kk = items$max_score,
-                                        y = observations$obs_score
+                                        y = observations$observed_score
                                 ),
                         # Extra iterations would be necessary for reliable
                         # 95% intervals (10K n_eff for η and δ).
                         # iter = 10000,
-                        # The hierarchical model does not converge without
+                        # The hierarchical models do not converge without
                         # a high adapt_delta.
                         control = list(adapt_delta = 0.99),
                         # The raw parameters are uninteresting.
@@ -324,79 +324,11 @@ new_rdfit <- function(cohorts,
                         ),
                         ...
                 )
-        loo <- loo::loo(stanfit, save_psis = TRUE)
-        ## Compute the posterior statistics.
-        pp_stats <-
-                observations %>%
-                mutate(
-                        expected_score =
-                                stanfit %>%
-                                as.matrix("y_rep") %>%
-                                ## E_loo issues annoying Pareto-k warnings.
-                                (quietly(E_loo))(loo$psis_object) %>%
-                                pluck("result", "value"),
-                        self_information =
-                                loo %>%
-                                pluck("pointwise") %>%
-                                as_tibble() %>%
-                                pluck("elpd_loo") %>%
-                                (function(p) -p / log(2)),
-                        entropy =
-                                stanfit %>%
-                                as.matrix("log_lik_rep") %>%
-                                ## E_loo issues annoying Pareto-k warnings.
-                                (quietly(E_loo))(loo$psis_object) %>%
-                                pluck("result", "value") %>%
-                                divide_by(-log(2)),
-                        p_score =
-                                as.matrix(stanfit, "y_rep") %>%
-                                subtract(
-                                        matrix(
-                                                data = observations$obs_score,
-                                                nrow = nrow(.),
-                                                ncol = ncol(.),
-                                                byrow = TRUE
-                                        ),
-                                        .
-                                ) %>%
-                                ## Use Gelman et al.'s (2013) 'mid' p-value.
-                                (function(x) 0.5 * sign(x) + 0.5) %>%
-                                ## E_loo issues annoying Pareto-k warnings.
-                                (quietly(E_loo))(loo$psis_object) %>%
-                                pluck("result", "value"),
-                        ## Subtract log_lik from log_lik_rep because this is
-                        ## about information, which is -log_lik_rep subtracted
-                        ## from -log_lik.
-                        p_information =
-                                stanfit %>%
-                                as.matrix("log_lik_rep") %>%
-                                subtract(as.matrix(stanfit, "log_lik")) %>%
-                                ## Use Gelman et al.'s (2013) 'mid' p-value.
-                                (function(x) 0.5 * sign(x) + 0.5) %>%
-                                ## E_loo issues annoying Pareto-k warnings.
-                                (quietly(E_loo))(loo$psis_object) %>%
-                                pluck("result", "value")
-                ) %>%
-                select(
-                        .data$cohort,
-                        .data$group, .data$person,
-                        .data$testlet, .data$item, .data$max_score,
-                        .data$obs_score, .data$expected_score,.data$p_score,
-                        .data$self_information, .data$entropy,
-                        .data$p_information
-                )
-        ## TODO: Replace observations with posterior statistics.
-        new_tibble(
-                x = pp_stats,
-                stanfit = stanfit,
-                loo = loo,
-                stan_ids =
-                        list(
-                                groups = groups$group,
-                                persons = persons$person,
-                                testlets = testlets$testlet,
-                                items = items$item
-                        ),
+        structure(
+                list(
+                        data = observations,
+                        stanfit = stanfit
+                ),
                 class = "rdfit"
         )
 }
