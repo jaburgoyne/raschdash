@@ -42,22 +42,20 @@
 #'            for the person-level observations, vectors of the corresponding
 #'            cohorts (`obs_person_cohorts`), persons (`obs_persons`), items
 #'            (`obs_person_items`), and observed scores (`obs_person_scores`)
+#' @param pars which parameters to save from the Stan model. Defaults to
+#'             `standard`, which only saves parameters on the standard scale,
+#'             but may also be `logit` to add logit-scale parameters,
+#'             or `hyper` to add logit-scale parameters and hyper-parameters.
+#'             For debugging, the `all` option adds other raw parameters
+#'             specific to the Stan implementation.
 #' @param ... additional parameters passed to [rstan::sampling()]
 #'
 #' @return An object of class `rdfit` with the following attributes.
 #' \describe{
+#'  \item{`data`}{The input data as passed to Stan.}
 #'  \item{`stanfit`}{
 #'   The [rstan::stanfit] object for the fitted model. It contains samples of
 #'   the following parameters.
-#'   * logit-scale parameters
-#'       * `xi`: group abilities
-#'       * `eta`: person abilities
-#'       * `epsilon`: testlet difficulties
-#'       * `delta`: item difficulties
-#'       * `tau`: rating-scale threshold offsets from overall item
-#'                difficulty (if any rating-scale items are present)
-#'       * `lambda`: standard deviation of person abilities. Used to
-#'                   transform the logit scale to the standard scale.
 #'   * standard-scale parameters
 #'       * `group_ability`: group abilities
 #'       * `person_ability`: person abilities
@@ -66,6 +64,8 @@
 #'       * `thresholds`: rating-scale threshold offsets from overall item
 #'                       difficulty (if any rating-scale items are
 #'                       present)
+#'       * `sigma`: standard deviation of person abilities on the logit scale.
+#'                  Used to convert between the logit and standard scales.
 #'   * posterior predictive distribution
 #'       * `y_rep`: predicted score for each observed combination of
 #'                  group, person, and item
@@ -76,6 +76,19 @@
 #'   * log likelihoods
 #'       * `log_lik`: log likelihood of observed scores
 #'       * `log_lik_rep`: log likelihood of predicted scores
+#'   * logit-scale parameters (when `pars = "logit"` or `pars = "hyper"`)
+#'       * `xi`: group abilities
+#'       * `eta`: person abilities
+#'       * `epsilon`: testlet difficulties
+#'       * `delta`: item difficulties
+#'       * `tau`: rating-scale threshold offsets from overall item
+#'                difficulty (if any rating-scale items are present)
+#'    * hyper-parameters (when `pars = "hyper"`)
+#'       * `nu`: mean difficulty
+#'       * `psi`: scale of group abilities
+#'       * `phi`: scale of person abilities (relative to group)
+#'       * `theta_epsilon`: scale of testlet difficulties
+#'       * `theta_upsilon`: scale of item difficulties (relative to testlet)
 #'  }
 #'
 #'  \item{`loo`}{
@@ -137,11 +150,11 @@ rdfit <- function(data,
         }
         ## Check for NAs and duplicates when preparing data for Stan. Stan's
         ## validation will catch these, but not with helpful messages.
-        cohorts <- obs %>% distinct(.data$cohort)
+        cohorts <- obs %>% dplyr::distinct(.data$cohort)
         if (any(vctrs::vec_equal_na(cohorts$cohort))) {
                 rlang::abort("Some cohorts are undefined.")
         }
-        groups <- obs %>% distinct(.data$group)
+        groups <- obs %>% dplyr::distinct(.data$group)
         if (any(vctrs::vec_equal_na(groups$group))) {
                 rlang::abort("Some groups are undefined.")
         }
@@ -155,11 +168,13 @@ rdfit <- function(data,
         if (vctrs::vec_duplicate_any(persons$person)) {
                 rlang::abort("Some persons belong to multiple groups.")
         }
-        testlets <- obs %>% distinct(.data$testlet)
+        testlets <- obs %>% dplyr::distinct(.data$testlet)
         if (any(vctrs::vec_equal_na(testlets$testlet))) {
                 rlang::abort("Some testlets are undefined.")
         }
-        items <- obs %>% distinct(.data$item, .data$testlet, .data$max_score)
+        items <-
+                obs %>%
+                dplyr::distinct(.data$item, .data$testlet, .data$max_score)
         if (any(vctrs::vec_equal_na(items$item))
         || any(vctrs::vec_equal_na(items$max_score))) {
                 rlang::abort("Some items are undefined.")
@@ -178,8 +193,8 @@ rdfit <- function(data,
         k <- max(vctrs::vec_cast(k, integer(), x_arg = "k"), 1)
         ## The constructor asks for group and individual observations to be
         ## separated.
-        group_obs <- obs %>% filter(vctrs::vec_equal_na(.data$person))
-        person_obs <- obs %>% filter(!vctrs::vec_equal_na(.data$person))
+        group_obs <- obs %>% dplyr::filter(vctrs::vec_equal_na(.data$person))
+        person_obs <- obs %>% dplyr::filter(!vctrs::vec_equal_na(.data$person))
         new_rdfit(
                 cohorts = cohorts$cohort,
                 groups = groups$group,
@@ -210,7 +225,31 @@ new_rdfit <- function(cohorts,
                       obs_person_cohorts, obs_persons, obs_person_items,
                       obs_person_scores,
                       k = 1,
+                      pars = c("standard", "logit", "hyper", "all"),
                       ...) {
+        STANDARD_PARS <-
+                c(
+                        "sigma",
+                        "group_ability", "person_ability",
+                        "testlet_difficulty", "item_difficulty",
+                        "thresholds",
+                        "y_rep",
+                        "prior_group_ability",
+                        "prior_person_ability",
+                        "prior_testlet_difficulty",
+                        "prior_item_difficulty",
+                        "log_lik", "log_lik_rep"
+                )
+        LOGIT_PARS <- c("xi", "eta", "epsilon", "delta", "tau")
+        HYPER_PARS <- c("psi", "phi", "theta_epsilon", "theta_upsilon")
+        stan_pars <-
+                list(
+                        "hyper" = c(STANDARD_PARS, LOGIT_PARS, HYPER_PARS),
+                        "logit" = c(STANDARD_PARS, LOGIT_PARS),
+                        "standard" = c(STANDARD_PARS),
+                        "all" = NA
+                ) %>%
+                purrr::pluck("pars")
         ## Make tidy tibbles and sort for reliable indexing inside Stan.
         groups <-
                 dplyr::tibble(
@@ -309,19 +348,7 @@ new_rdfit <- function(cohorts,
                         # a high adapt_delta.
                         control = list(adapt_delta = 0.99),
                         # The raw parameters are uninteresting.
-                        pars = c(
-                                "xi", "eta", "epsilon", "delta", "tau",
-                                "lambda",
-                                "group_ability", "person_ability",
-                                "testlet_difficulty", "item_difficulty",
-                                "thresholds",
-                                "y_rep",
-                                "prior_group_ability",
-                                "prior_person_ability",
-                                "prior_testlet_difficulty",
-                                "prior_item_difficulty",
-                                "log_lik", "log_lik_rep"
-                        ),
+                        pars = stan_pars,
                         ...
                 )
         structure(

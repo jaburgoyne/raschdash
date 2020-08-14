@@ -119,14 +119,14 @@
 
     <pre class="usage"><span class='fu'>rdfit</span>(
   <span class='no'>data</span>,
-  <span class='kw'>cohort</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>group</span>,
+  <span class='kw'>cohort</span> <span class='kw'>=</span> <span class='st'>"All"</span>,
+  <span class='kw'>group</span> <span class='kw'>=</span> <span class='st'>"All"</span>,
   <span class='no'>person</span>,
-  <span class='no'>testlet</span>,
+  <span class='kw'>testlet</span> <span class='kw'>=</span> <span class='st'>"All"</span>,
   <span class='no'>item</span>,
   <span class='no'>max_score</span>,
   <span class='no'>obs_score</span>,
-  <span class='kw'>k</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>k</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='no'>...</span>
 )
 
@@ -147,7 +147,8 @@
   <span class='no'>obs_persons</span>,
   <span class='no'>obs_person_items</span>,
   <span class='no'>obs_person_scores</span>,
-  <span class='kw'>k</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>k</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"standard"</span>, <span class='st'>"logit"</span>, <span class='st'>"hyper"</span>, <span class='st'>"all"</span>),
   <span class='no'>...</span>
 )</pre>
 
@@ -167,7 +168,8 @@ generic <em>All</em> cohort.</p></td>
     </tr>
     <tr>
       <th>group</th>
-      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; group column</p></td>
+      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; group column. Defaults to a
+generic <em>All</em> group.</p></td>
     </tr>
     <tr>
       <th>person</th>
@@ -175,7 +177,8 @@ generic <em>All</em> cohort.</p></td>
     </tr>
     <tr>
       <th>testlet</th>
-      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; testlet column</p></td>
+      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; testlet column. Defaults to a
+generic <em>All</em> testlet.</p></td>
     </tr>
     <tr>
       <th>item</th>
@@ -234,24 +237,24 @@ cohorts (<code>obs_group_cohorts</code>), groups (<code>obs_groups</code>), item
 cohorts (<code>obs_person_cohorts</code>), persons (<code>obs_persons</code>), items
 (<code>obs_person_items</code>), and observed scores (<code>obs_person_scores</code>)</p></td>
     </tr>
+    <tr>
+      <th>pars</th>
+      <td><p>which parameters to save from the Stan model. Defaults to
+<code>'standard'</code>, which only saves parameters on the standard scale,
+but may also be <code>'logit'</code> to include logit-scale parameters,
+<code>'hyper'</code> to include hyper-parameters, or <code>'all'</code> to include
+all parameters. The <code>'all'</code> setting is likely only useful for
+debugging.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>An object of class <code>rdfit</code> with the following attributes.</p><dl'>
+<dt><code>data</code></dt><dd><p>The input data as passed to Stan.</p></dd>
 <dt><code>stanfit</code></dt><dd><p>The <a href='https://mc-stan.org/rstan/reference/stanfit-class.html'>rstan::stanfit</a> object for the fitted model. It contains samples of
 the following parameters.
 <ul>
-<li><p>logit-scale parameters</p><ul>
-<li><p><code>xi</code>: group abilities</p></li>
-<li><p><code>eta</code>: person abilities</p></li>
-<li><p><code>epsilon</code>: testlet difficulties</p></li>
-<li><p><code>delta</code>: item difficulties</p></li>
-<li><p><code>tau</code>: rating-scale threshold offsets from overall item
-difficulty (if any rating-scale items are present)</p></li>
-<li><p><code>lambda</code>: standard deviation of person abilities. Used to
-transform the logit scale to the standard scale.</p></li>
-</ul></li>
 <li><p>standard-scale parameters</p><ul>
 <li><p><code>group_ability</code>: group abilities</p></li>
 <li><p><code>person_ability</code>: person abilities</p></li>
@@ -272,6 +275,23 @@ group, person, and item</p></li>
 <li><p>log likelihoods</p><ul>
 <li><p><code>log_lik</code>: log likelihood of observed scores</p></li>
 <li><p><code>log_lik_rep</code>: log likelihood of predicted scores</p></li>
+</ul></li>
+<li><p>logit-scale parameters</p><ul>
+<li><p><code>xi</code>: group abilities</p></li>
+<li><p><code>eta</code>: person abilities</p></li>
+<li><p><code>epsilon</code>: testlet difficulties</p></li>
+<li><p><code>delta</code>: item difficulties</p></li>
+<li><p><code>tau</code>: rating-scale threshold offsets from overall item
+difficulty (if any rating-scale items are present)</p></li>
+<li><p><code>lambda</code>: standard deviation of person abilities. Used to
+transform the logit scale to the standard scale.</p></li>
+</ul></li>
+<li><p>hyper-parameters</p><ul>
+<li><p><code>nu</code>: mean difficulty</p></li>
+<li><p><code>psi</code>: scale of group abilities</p></li>
+<li><p><code>phi</code>: scale of person abilities (relative to group)</p></li>
+<li><p><code>theta_epsilon</code>: scale of testlet difficulties</p></li>
+<li><p><code>theta_upsilon</code>: scale of item difficulties (relative to testlet)</p></li>
 </ul></li>
 </ul></p></dd>
 

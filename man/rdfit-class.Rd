@@ -37,6 +37,7 @@ new_rdfit(
   obs_person_items,
   obs_person_scores,
   k = 1,
+  pars = c("standard", "logit", "hyper", "all"),
   ...
 )
 }
@@ -88,25 +89,22 @@ cohorts (\code{obs_group_cohorts}), groups (\code{obs_groups}), items
 \item{obs_person_cohorts, obs_persons, obs_person_items, obs_person_scores}{for the person-level observations, vectors of the corresponding
 cohorts (\code{obs_person_cohorts}), persons (\code{obs_persons}), items
 (\code{obs_person_items}), and observed scores (\code{obs_person_scores})}
+
+\item{pars}{which parameters to save from the Stan model. Defaults to
+\code{standard}, which only saves parameters on the standard scale,
+but may also be \code{logit} to add logit-scale parameters,
+or \code{hyper} to add logit-scale parameters and hyper-parameters.
+For debugging, the \code{all} option adds other raw parameters
+specific to the Stan implementation.}
 }
 \value{
 An object of class \code{rdfit} with the following attributes.
 \describe{
+\item{\code{data}}{The input data as passed to Stan.}
 \item{\code{stanfit}}{
 The \link[rstan:stanfit-class]{rstan::stanfit} object for the fitted model. It contains samples of
 the following parameters.
 \itemize{
-\item logit-scale parameters
-\itemize{
-\item \code{xi}: group abilities
-\item \code{eta}: person abilities
-\item \code{epsilon}: testlet difficulties
-\item \code{delta}: item difficulties
-\item \code{tau}: rating-scale threshold offsets from overall item
-difficulty (if any rating-scale items are present)
-\item \code{lambda}: standard deviation of person abilities. Used to
-transform the logit scale to the standard scale.
-}
 \item standard-scale parameters
 \itemize{
 \item \code{group_ability}: group abilities
@@ -116,6 +114,8 @@ transform the logit scale to the standard scale.
 \item \code{thresholds}: rating-scale threshold offsets from overall item
 difficulty (if any rating-scale items are
 present)
+\item \code{sigma}: standard deviation of person abilities on the logit scale.
+Used to convert between the logit and standard scales.
 }
 \item posterior predictive distribution
 \itemize{
@@ -130,6 +130,23 @@ group, person, and item
 \itemize{
 \item \code{log_lik}: log likelihood of observed scores
 \item \code{log_lik_rep}: log likelihood of predicted scores
+}
+\item logit-scale parameters (when \code{pars = "logit"} or \code{pars = "hyper"})
+\itemize{
+\item \code{xi}: group abilities
+\item \code{eta}: person abilities
+\item \code{epsilon}: testlet difficulties
+\item \code{delta}: item difficulties
+\item \code{tau}: rating-scale threshold offsets from overall item
+difficulty (if any rating-scale items are present)
+}
+\item hyper-parameters (when \code{pars = "hyper"})
+\itemize{
+\item \code{nu}: mean difficulty
+\item \code{psi}: scale of group abilities
+\item \code{phi}: scale of person abilities (relative to group)
+\item \code{theta_epsilon}: scale of testlet difficulties
+\item \code{theta_upsilon}: scale of item difficulties (relative to testlet)
 }
 }
 }
