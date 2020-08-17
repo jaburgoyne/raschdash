@@ -3,7 +3,7 @@
 #' @import Rcpp
 #' @import methods
 #' @importFrom rstan sampling
-#' @useDynLib raschdash
+#' @useDynLib raschdash, .registration = TRUE
 #
 # The following block is used by usethis to automatically manage
 # roxygen namespace tags. Modify with care!

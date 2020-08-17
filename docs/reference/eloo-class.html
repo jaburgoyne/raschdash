@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Constructor for <code>rdfit</code> — new_rdfit • raschdash</title>
+<title><code>eloo</code> vector — eloo-class • raschdash</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,9 @@
 
 
 
-<meta property="og:title" content="Constructor for <code>rdfit</code> — new_rdfit" />
-<meta property="og:description" content="Construct an rdfit object." />
+<meta property="og:title" content="<code>eloo</code> vector — eloo-class" />
+<meta property="og:description" content="Attach Pareto-k estimates to expectations from the loo package. Mostly
+intended for internal development." />
 
 
 
@@ -108,67 +109,56 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Constructor for <code>rdfit</code></h1>
-    <small class="dont-index">Source: <a href='https://github.com/jaburgoyne/raschdash/blob/master/R/rdfit.R'><code>R/rdfit.R</code></a></small>
-    <div class="hidden name"><code>new_rdfit.Rd</code></div>
+    <h1><code>eloo</code> vector</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jaburgoyne/raschdash/blob/master/R/eloo.R'><code>R/eloo.R</code></a></small>
+    <div class="hidden name"><code>eloo-class.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Construct an <code>rdfit</code> object.</p>
+    <p>Attach Pareto-<em>k</em> estimates to expectations from the <code>loo</code> package. Mostly
+intended for internal development.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>new_rdfit</span>(
-  <span class='no'>data</span>,
-  <span class='no'>cohort_colname</span>,
-  <span class='no'>group_colname</span>,
-  <span class='no'>person_colname</span>,
-  <span class='no'>testlet_colname</span>,
-  <span class='no'>item_colname</span>,
-  <span class='no'>max_score_colname</span>,
-  <span class='no'>obs_score_colname</span>
-)</pre>
+    <pre class="usage"><span class='fu'>new_eloo</span>(<span class='kw'>value</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/double.html'>double</a></span>(), <span class='kw'>pareto_k</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/double.html'>double</a></span>())
+
+<span class='fu'>eloo</span>(<span class='no'>df</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>data</th>
-      <td><p>a data frame with columns for cohort, group, person, testlet,
-item, maximum score, and observed score</p></td>
+      <th>value</th>
+      <td><p>a numeric vector</p></td>
     </tr>
     <tr>
-      <th>cohort_colname</th>
-      <td><p>name of the cohort column</p></td>
+      <th>pareto_k</th>
+      <td><p>a numeric vector of Pareto-<em>k</em> shape parameters corresponding
+to <code>x</code></p></td>
     </tr>
     <tr>
-      <th>group_colname</th>
-      <td><p>name of the group column</p></td>
-    </tr>
-    <tr>
-      <th>person_colname</th>
-      <td><p>name of the person column</p></td>
-    </tr>
-    <tr>
-      <th>testlet_colname</th>
-      <td><p>name of the testlet column</p></td>
-    </tr>
-    <tr>
-      <th>item_colname</th>
-      <td><p>name of the item column</p></td>
-    </tr>
-    <tr>
-      <th>max_score_colname</th>
-      <td><p>name of the maximum score column</p></td>
-    </tr>
-    <tr>
-      <th>obs_score_colname</th>
-      <td><p>name of the observed score column</p></td>
+      <th>df</th>
+      <td><p>a data frame with columns <code>value</code> and <code>pareto_k</code></p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <code>rdfit</code> object.</p>
+    <p>An S3 vector of class <code>eloo</code>. The Pareto <em>k</em> parameters are
+accessible using <code><a href='https://vctrs.r-lib.org/reference/fields.html'>vctrs::field()</a></code>.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>The <code>eloo</code> class makes it easier to work with vectors that have Pareto <em>k</em>
+values attached. For a conservative set of basic arithmetic operations,
+<code>eloo</code> objects will retain their Pareto <em>k</em> values, but most operations will
+fall gracefully back to standard numeric vector operations.</p>
+    <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
+
+    
+<ul>
+<li><p><code>new_eloo</code>: Create an <code>eloo</code> vector.</p></li>
+<li><p><code>eloo</code>: Create an <code>eloo</code> vector from the output of
+<code><a href='https://mc-stan.org/loo/reference/E_loo.html'>loo::E_loo()</a></code>.</p></li>
+</ul>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

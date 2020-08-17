@@ -163,34 +163,34 @@ group-level observations, the person should be <code>NA</code>.</p></td>
     </tr>
     <tr>
       <th>cohort</th>
-      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; cohort column. Defaults to a
+      <td><p>&lt;<a href='https://rdrr.io/pkg/tidyr/man/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; cohort column. Defaults to a
 generic <em>All</em> cohort.</p></td>
     </tr>
     <tr>
       <th>group</th>
-      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; group column. Defaults to a
+      <td><p>&lt;<a href='https://rdrr.io/pkg/tidyr/man/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; group column. Defaults to a
 generic <em>All</em> group.</p></td>
     </tr>
     <tr>
       <th>person</th>
-      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; person column</p></td>
+      <td><p>&lt;<a href='https://rdrr.io/pkg/tidyr/man/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; person column</p></td>
     </tr>
     <tr>
       <th>testlet</th>
-      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; testlet column. Defaults to a
+      <td><p>&lt;<a href='https://rdrr.io/pkg/tidyr/man/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; testlet column. Defaults to a
 generic <em>All</em> testlet.</p></td>
     </tr>
     <tr>
       <th>item</th>
-      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; item column</p></td>
+      <td><p>&lt;<a href='https://rdrr.io/pkg/tidyr/man/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; item column</p></td>
     </tr>
     <tr>
       <th>max_score</th>
-      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; maximum-score column</p></td>
+      <td><p>&lt;<a href='https://rdrr.io/pkg/tidyr/man/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; maximum-score column</p></td>
     </tr>
     <tr>
       <th>obs_score</th>
-      <td><p>&lt;<a href='https://tidyr.tidyverse.org/reference/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; observed score column</p></td>
+      <td><p>&lt;<a href='https://rdrr.io/pkg/tidyr/man/tidyr_tidy_select.html'>tidyr::tidyr_tidy_select</a>&gt; observed score column</p></td>
     </tr>
     <tr>
       <th>k</th>
@@ -240,11 +240,11 @@ cohorts (<code>obs_person_cohorts</code>), persons (<code>obs_persons</code>), i
     <tr>
       <th>pars</th>
       <td><p>which parameters to save from the Stan model. Defaults to
-<code>'standard'</code>, which only saves parameters on the standard scale,
-but may also be <code>'logit'</code> to include logit-scale parameters,
-<code>'hyper'</code> to include hyper-parameters, or <code>'all'</code> to include
-all parameters. The <code>'all'</code> setting is likely only useful for
-debugging.</p></td>
+<code>standard</code>, which only saves parameters on the standard scale,
+but may also be <code>logit</code> to add logit-scale parameters,
+or <code>hyper</code> to add logit-scale parameters and hyper-parameters.
+For debugging, the <code>all</code> option adds other raw parameters
+specific to the Stan implementation.</p></td>
     </tr>
     </table>
 
@@ -263,6 +263,8 @@ the following parameters.
 <li><p><code>thresholds</code>: rating-scale threshold offsets from overall item
 difficulty (if any rating-scale items are
 present)</p></li>
+<li><p><code>sigma</code>: standard deviation of person abilities on the logit scale.
+Used to convert between the logit and standard scales.</p></li>
 </ul></li>
 <li><p>posterior predictive distribution</p><ul>
 <li><p><code>y_rep</code>: predicted score for each observed combination of
@@ -276,17 +278,15 @@ group, person, and item</p></li>
 <li><p><code>log_lik</code>: log likelihood of observed scores</p></li>
 <li><p><code>log_lik_rep</code>: log likelihood of predicted scores</p></li>
 </ul></li>
-<li><p>logit-scale parameters</p><ul>
+<li><p>logit-scale parameters (when <code>pars = "logit"</code> or <code>pars = "hyper"</code>)</p><ul>
 <li><p><code>xi</code>: group abilities</p></li>
 <li><p><code>eta</code>: person abilities</p></li>
 <li><p><code>epsilon</code>: testlet difficulties</p></li>
 <li><p><code>delta</code>: item difficulties</p></li>
 <li><p><code>tau</code>: rating-scale threshold offsets from overall item
 difficulty (if any rating-scale items are present)</p></li>
-<li><p><code>lambda</code>: standard deviation of person abilities. Used to
-transform the logit scale to the standard scale.</p></li>
 </ul></li>
-<li><p>hyper-parameters</p><ul>
+<li><p>hyper-parameters (when <code>pars = "hyper"</code>)</p><ul>
 <li><p><code>nu</code>: mean difficulty</p></li>
 <li><p><code>psi</code>: scale of group abilities</p></li>
 <li><p><code>phi</code>: scale of person abilities (relative to group)</p></li>
