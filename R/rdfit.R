@@ -123,13 +123,13 @@ rdfit <- function(data,
                         ## Rasch models require integral scores, and vctrs
                         ## complains nicely.
                         max_score =
-                                vctrs::vec_cast(
+                                vec_cast(
                                         x = {{ max_score }},
                                         to = integer(),
                                         x_arg = "max_score"
                                 ),
                         obs_score =
-                                vctrs::vec_cast(
+                                vec_cast(
                                         x = {{ obs_score }},
                                         to = integer(),
                                         x_arg = "obs_score"
@@ -137,50 +137,48 @@ rdfit <- function(data,
                 ) %>%
                 ## Rasch models have no problem with missing observations, but
                 ## Stan does not want to see them.
-                dplyr::filter(!vctrs::vec_equal_na(obs_score))
+                dplyr::filter(!vec_equal_na(obs_score))
         ## Stan will complain about invalid scores, but the messages will be
         ## opaque for R users.
         if (any(obs$max_score < 1)) {
-                rlang::abort("Some maximum scores are non-positive.")
+                abort("Some maximum scores are non-positive.")
         }
         if (any(obs$obs_score > obs$max_score)) {
-                rlang::abort(
-                        "Some observed scores are greater than their maxima."
-                )
+                abort("Some observed scores are greater than their maxima.")
         }
         ## Check for NAs and duplicates when preparing data for Stan. Stan's
         ## validation will catch these, but not with helpful messages.
-        cohorts <- obs %>% dplyr::distinct(.data$cohort)
-        if (any(vctrs::vec_equal_na(cohorts$cohort))) {
-                rlang::abort("Some cohorts are undefined.")
+        cohorts <- dplyr::distinct(obs, .data$cohort)
+        if (any(vec_equal_na(cohorts$cohort))) {
+                abort("Some cohorts are undefined.")
         }
-        groups <- obs %>% dplyr::distinct(.data$group)
-        if (any(vctrs::vec_equal_na(groups$group))) {
-                rlang::abort("Some groups are undefined.")
+        groups <- dplyr::distinct(obs, .data$group)
+        if (any(vec_equal_na(groups$group))) {
+                abort("Some groups are undefined.")
         }
         persons <-
-                obs %>%
-                dplyr::distinct(.data$person, .data$group) %>%
-                dplyr::filter(!vctrs::vec_equal_na(person))
+                dplyr::filter(
+                        dplyr::distinct(obs, .data$person, .data$group),
+                        !vec_equal_na(.data$person)
+                )
         ## Persons may be NA because at this point in the function, the group
         ## will not be (i.e., NA persons are guaranteed to refer to group
         ## observations).
-        if (vctrs::vec_duplicate_any(persons$person)) {
-                rlang::abort("Some persons belong to multiple groups.")
+        if (vec_duplicate_any(persons$person)) {
+                abort("Some persons belong to multiple groups.")
         }
-        testlets <- obs %>% dplyr::distinct(.data$testlet)
-        if (any(vctrs::vec_equal_na(testlets$testlet))) {
-                rlang::abort("Some testlets are undefined.")
+        testlets <- dplyr::distinct(obs, .data$testlet)
+        if (any(vec_equal_na(testlets$testlet))) {
+                abort("Some testlets are undefined.")
         }
         items <-
-                obs %>%
-                dplyr::distinct(.data$item, .data$testlet, .data$max_score)
-        if (any(vctrs::vec_equal_na(items$item))
-        || any(vctrs::vec_equal_na(items$max_score))) {
-                rlang::abort("Some items are undefined.")
+                dplyr::distinct(obs, .data$item, .data$testlet, .data$max_score)
+        if (any(vec_equal_na(items$item))
+        || any(vec_equal_na(items$max_score))) {
+                abort("Some items are undefined.")
         }
-        if (vctrs::vec_duplicate_any(items$item)) {
-                rlang::abort(
+        if (vec_duplicate_any(items$item)) {
+                abort(
                         stringr::str_c(
                                 "Some items belong to multiple testlets ",
                                 "or have inconsistent max scores."
@@ -190,11 +188,11 @@ rdfit <- function(data,
         ## A negative integer is no serious problem for K (it simply fails to
         ## select any items for rating scale), but Stan needs it to be
         ## non-negative in order to set the dimension of tau.
-        k <- max(vctrs::vec_cast(k, integer(), x_arg = "k"), 1)
+        k <- max(vec_cast(k, integer(), x_arg = "k"), 1)
         ## The constructor asks for group and individual observations to be
         ## separated.
-        group_obs <- obs %>% dplyr::filter(vctrs::vec_equal_na(.data$person))
-        person_obs <- obs %>% dplyr::filter(!vctrs::vec_equal_na(.data$person))
+        group_obs <- dplyr::filter(obs, vec_equal_na(.data$person))
+        person_obs <- dplyr::filter(obs, !vec_equal_na(.data$person))
         new_rdfit(
                 cohorts = cohorts$cohort,
                 groups = groups$group,
@@ -243,13 +241,12 @@ new_rdfit <- function(cohorts,
         LOGIT_PARS <- c("xi", "eta", "epsilon", "delta", "tau")
         HYPER_PARS <- c("psi", "phi", "theta_epsilon", "theta_upsilon")
         stan_pars <-
-                list(
+                switch(pars,
                         "hyper" = c(STANDARD_PARS, LOGIT_PARS, HYPER_PARS),
                         "logit" = c(STANDARD_PARS, LOGIT_PARS),
                         "standard" = c(STANDARD_PARS),
-                        "all" = NA
-                ) %>%
-                purrr::pluck("pars")
+                        NA
+                )
         ## Make tidy tibbles and sort for reliable indexing inside Stan.
         groups <-
                 dplyr::tibble(
@@ -297,7 +294,7 @@ new_rdfit <- function(cohorts,
                                 ## The Stan model uses negative integers
                                 ##  to denote group observations.
                                 stan_person = -.data$stan_group,
-                                person = vctrs::vec_cast(NA, to = obs_persons),
+                                person = vec_cast(NA, to = obs_persons),
                                 .data$group
                         ),
                         by = "group"

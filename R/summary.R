@@ -5,14 +5,14 @@
 .loo_statistics <- function(x, indices = NULL, use_loo = FALSE) {
         stanfit <- purrr::pluck(x, "stanfit")
         .collapse <- function(par) {
-                if (rlang::is_null(indices)) {
+                if (is_null(indices)) {
                         as.matrix(stanfit, par)
                 } else {
                         sapply(
                                 X = indices,
                                 FUN = function(i) {
                                         apply(
-                                                X = as.matrix(stanfit, par)[,i],
+                                                X = as.matrix(stanfit, par)[, i],
                                                 MARGIN = 1,
                                                 FUN = sum
                                         )
@@ -22,14 +22,16 @@
         }
         log_lik <- .collapse("log_lik")
         observed_scores <-
-                indices %>%
                 purrr:::map_dbl(
+                        indices,
                         function(i) {
-                                x %>%
-                                        purrr::pluck("data") %>%
-                                        dplyr::slice(i) %>%
-                                        dplyr::pull("observed_score") %>%
-                                        sum()
+                                dplyr::summarise(
+                                        dplyr::slice(x$data, i),
+                                        dplyr::across(
+                                                .data$observed_score,
+                                                sum
+                                        )
+                                )
                         }
                 )
         y <-
@@ -52,7 +54,7 @@
                                 log_lik,
                                 r_eff =
                                         loo::relative_eff(
-                                                x = exp(log_lik),
+                                                exp(log_lik),
                                                 chain_id =
                                                         rep(
                                                                 1:ncol(stanfit),
@@ -62,20 +64,19 @@
                                 save_psis = TRUE
                         )
                 .expectation <- function(x) {
-                        loo::E_loo(
-                                x = x,
-                                psis_object = loo$psis_object,
-                                ## E_loo() issues an annoying warning in the
-                                ## absence of log_ratios.
-                                log_ratios = -log_lik,
-                        ) %>%
-                                eloo()
+                        eloo(
+                                loo::E_loo(
+                                        x,
+                                        psis_object = loo$psis_object,
+                                        log_ratios = -log_lik,
+                                )
+                        )
                 }
         } else {
                 .expectation <- function(x) apply(x, 2, mean)
         }
         dplyr::tibble(
-                expected_score = y_rep %>% .expectation(),
+                expected_score = .expectation(y_rep),
                 information_content =
                         if (use_loo) {
                                 loo %>%
@@ -84,22 +85,17 @@
                                         purrr::pluck("elpd_loo") %>%
                                         magrittr::divide_by(-log(2))
                         } else {
-                                log_lik %>% .expectation() %>%
-                                magrittr::divide_by(-log(2))
+                                .expectation(log_lik) / -log(2)
                         },
-                entropy =
-                        log_lik_rep %>%
-                        .expectation() %>%
-                        magrittr::divide_by(-log(2)),
-                p_score =
-                        .heaviside_difference(y, y_rep) %>%
-                        .expectation(),
+                entropy = .expectation(log_lik_rep) / -log(2),
+                p_score = .expectation(.heaviside_difference(y, y_rep)),
                 ## Subtract log_lik from log_lik_rep instead of the other way
                 ## around because this statistic is about information content,
                 ## not likelihood.
                 p_information =
-                        .heaviside_difference(log_lik_rep, log_lik) %>%
-                        .expectation()
+                        .expectation(
+                                .heaviside_difference(log_lik_rep, log_lik)
+                        ),
         ) %>%
                 dplyr::bind_cols(
                         if (use_loo) {
@@ -112,19 +108,18 @@
                 )
 }
 
-#' @importFrom rlang !!!
 #' @export
 summary.rdfit <- function(object, ..., use_loo = NULL) {
         .add_group_observations <- function(df) {
                 group_observations <-
                         dplyr::filter(
                                 dplyr::ungroup(df),
-                                vctrs::vec_equal_na(.data$person)
+                                vec_equal_na(.data$person)
                         )
                 person_observations <-
                         dplyr::filter(
                                 dplyr::ungroup(df),
-                                !vctrs::vec_equal_na(.data$person)
+                                !vec_equal_na(.data$person)
                         )
                 group_observations %>%
                         dplyr::select(-.data$person) %>%
@@ -147,18 +142,13 @@ summary.rdfit <- function(object, ..., use_loo = NULL) {
                         ## Add group observations to persons if both are
                         ## present in the grouping variables.
                         extended_df <-
-                                if (vctrs::vec_in("group", group_vars)) {
-                                        numbered_df %>%
-                                                .add_group_observations()
-                                } else if (
-                                        vctrs::vec_in("person", group_vars)
-                                ) {
-                                        numbered_df %>%
-                                                filter(
-                                                        !vctrs::vec_equal_na(
-                                                                .data$person
-                                                        )
-                                                )
+                                if (vec_in("group", group_vars)) {
+                                        .add_group_observations(numbered_df)
+                                } else if (vec_in("person", group_vars)) {
+                                        dplyr::filter(
+                                                numbered_df,
+                                                !vec_equal_na(.data$person)
+                                        )
                                 } else {
                                         numbered_df
                                 }
@@ -192,15 +182,15 @@ summary.rdfit <- function(object, ..., use_loo = NULL) {
                 .loo_statistics(
                         x = object,
                         indices =
-                                if (tibble::has_name(grouped_data, 'row')) {
+                                if (tibble::has_name(grouped_data, "row")) {
                                         grouped_data$row
                                 } else {
                                         NULL
                                 },
                         ## By default, use LOO only for complete observations.
                         use_loo =
-                                if (rlang::is_null(use_loo)) {
-                                        !tibble::has_name(grouped_data, 'row')
+                                if (is_null(use_loo)) {
+                                        !tibble::has_name(grouped_data, "row")
                                 } else {
                                         use_loo
                                 }

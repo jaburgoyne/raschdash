@@ -1,3 +1,8 @@
+# As a tidyverse-based package, we want rlang and vctrs.
+#
+#' @import rlang
+#' @import vctrs
+#
 # This block is recommended by rstantools.
 #
 #' @import Rcpp
@@ -13,7 +18,4 @@
 #' @importFrom lifecycle deprecate_soft
 ## usethis namespace: end
 #
-# As part of using pipes everywhere, we also need .data.
-#
-#' @importFrom rlang .data
 NULL
