@@ -61,7 +61,7 @@
                                         ),
                                 save_psis = TRUE
                         )
-                .loo_expectation <- function(x) {
+                .expectation <- function(x) {
                         loo::E_loo(
                                 x = x,
                                 psis_object = loo$psis_object,
@@ -69,13 +69,13 @@
                                 ## absence of log_ratios.
                                 log_ratios = -log_lik,
                         ) %>%
-                                purrr::pluck("value")
+                                eloo()
                 }
         } else {
-                .loo_expectation <- function(x) apply(x, 2, mean)
+                .expectation <- function(x) apply(x, 2, mean)
         }
         dplyr::tibble(
-                expected_score = y_rep %>% .loo_expectation(),
+                expected_score = y_rep %>% .expectation(),
                 information_content =
                         if (use_loo) {
                                 loo %>%
@@ -84,22 +84,22 @@
                                         purrr::pluck("elpd_loo") %>%
                                         magrittr::divide_by(-log(2))
                         } else {
-                                log_lik %>% .loo_expectation() %>%
+                                log_lik %>% .expectation() %>%
                                 magrittr::divide_by(-log(2))
                         },
                 entropy =
                         log_lik_rep %>%
-                        .loo_expectation() %>%
+                        .expectation() %>%
                         magrittr::divide_by(-log(2)),
                 p_score =
                         .heaviside_difference(y, y_rep) %>%
-                        .loo_expectation(),
+                        .expectation(),
                 ## Subtract log_lik from log_lik_rep instead of the other way
                 ## around because this statistic is about information content,
                 ## not likelihood.
                 p_information =
                         .heaviside_difference(log_lik_rep, log_lik) %>%
-                        .loo_expectation()
+                        .expectation()
         ) %>%
                 dplyr::bind_cols(
                         if (use_loo) {

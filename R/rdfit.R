@@ -347,7 +347,6 @@ new_rdfit <- function(cohorts,
                         # The hierarchical models do not converge without
                         # a high adapt_delta.
                         control = list(adapt_delta = 0.99),
-                        # The raw parameters are uninteresting.
                         pars = stan_pars,
                         ...
                 )
