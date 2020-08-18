@@ -22,18 +22,21 @@
         }
         log_lik <- .collapse("log_lik")
         observed_scores <-
-                purrr::map_dbl(
-                        indices,
-                        function(i) {
-                                dplyr::summarise(
-                                        dplyr::slice(x$data, i),
-                                        dplyr::across(
-                                                .data$observed_score,
-                                                sum
+                if (is_null(indices)) {
+                        x$data$observed_score
+                } else {
+                        purrr::map_dbl(
+                                indices,
+                                function(i) {
+                                        sum(
+                                                dplyr::pull(
+                                                        dplyr::slice(x$data, i),
+                                                        .data$observed_score
+                                                )
                                         )
-                                )
-                        }
-                )
+                                }
+                        )
+                }
         y <- matrix(observed_scores, nrow(log_lik), ncol(log_lik), byrow = TRUE)
         log_lik_rep <- .collapse("log_lik_rep")
         y_rep <- .collapse("y_rep")
@@ -69,8 +72,8 @@
                 information_content =
                         if (use_loo) {
                                 new_eloo(
-                                        value = loo$pointwise$elpd_loo / -log(2),
-                                        pareto_k = loo::pareto_k_values(loo)
+                                        loo$pointwise[, "elpd_loo"] / -log(2),
+                                        loo::pareto_k_values(loo)
                                 )
                         } else {
                                 .expectation(log_lik) / -log(2)
