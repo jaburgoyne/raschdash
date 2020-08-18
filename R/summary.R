@@ -9,12 +9,12 @@
                         as.matrix(stanfit, par)
                 } else {
                         sapply(
-                                X = indices,
-                                FUN = function(i) {
+                                indices,
+                                function(i) {
                                         apply(
-                                                X = as.matrix(stanfit, par)[, i],
-                                                MARGIN = 1,
-                                                FUN = sum
+                                                as.matrix(stanfit, par)[, i],
+                                                1,
+                                                sum
                                         )
                                 }
                         )
@@ -22,7 +22,7 @@
         }
         log_lik <- .collapse("log_lik")
         observed_scores <-
-                purrr:::map_dbl(
+                purrr::map_dbl(
                         indices,
                         function(i) {
                                 dplyr::summarise(
@@ -34,20 +34,9 @@
                                 )
                         }
                 )
-        y <-
-                matrix(
-                        data = observed_scores,
-                        nrow = nrow(log_lik),
-                        ncol = ncol(log_lik),
-                        byrow = TRUE
-                )
+        y <- matrix(observed_scores, nrow(log_lik), ncol(log_lik), byrow = TRUE)
         log_lik_rep <- .collapse("log_lik_rep")
         y_rep <- .collapse("y_rep")
-        ## Right now, using LOO is unreliable for grouped structures, except
-        ## possibly for items. The issue is well known for hierarchical data
-        ## (Vehtari et al., 2017). Using the simple mean is a solution for now,
-        ## but in the future, full cross-validation or improved LOO may be
-        ## worthwhile.
         if (use_loo) {
                 loo <-
                         loo::loo(
@@ -79,11 +68,10 @@
                 expected_score = .expectation(y_rep),
                 information_content =
                         if (use_loo) {
-                                loo %>%
-                                        purrr::pluck("pointwise") %>%
-                                        dplyr::as_tibble() %>%
-                                        purrr::pluck("elpd_loo") %>%
-                                        magrittr::divide_by(-log(2))
+                                new_eloo(
+                                        value = loo$pointwise$elpd_loo / -log(2),
+                                        pareto_k = loo::pareto_k_values(loo)
+                                )
                         } else {
                                 .expectation(log_lik) / -log(2)
                         },
@@ -95,17 +83,8 @@
                 p_information =
                         .expectation(
                                 .heaviside_difference(log_lik_rep, log_lik)
-                        ),
-        ) %>%
-                dplyr::bind_cols(
-                        if (use_loo) {
-                                dplyr::tibble(
-                                        pareto_k = loo::pareto_k_values(loo)
-                                )
-                        } else {
-                                NULL
-                        }
-                )
+                        )
+        )
 }
 
 #' @export
@@ -182,7 +161,7 @@ summary.rdfit <- function(object, ..., use_loo = NULL) {
                 .loo_statistics(
                         x = object,
                         indices =
-                                if (tibble::has_name(grouped_data, "row")) {
+                                if (has_name(grouped_data, "row")) {
                                         grouped_data$row
                                 } else {
                                         NULL
@@ -190,7 +169,7 @@ summary.rdfit <- function(object, ..., use_loo = NULL) {
                         ## By default, use LOO only for complete observations.
                         use_loo =
                                 if (is_null(use_loo)) {
-                                        !tibble::has_name(grouped_data, "row")
+                                        !has_name(grouped_data, "row")
                                 } else {
                                         use_loo
                                 }
