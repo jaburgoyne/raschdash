@@ -349,7 +349,7 @@ new_rdfit <- function(cohorts,
                 )
         structure(
                 list(
-                        data = observations,
+                        data = dplyr::as_tibble(observations),
                         stanfit = stanfit
                 ),
                 class = "rdfit"
