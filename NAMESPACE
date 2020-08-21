@@ -2,6 +2,7 @@
 
 S3method(format,eloo)
 S3method(loo,rdfit)
+S3method(print,rdfit)
 S3method(summary,rdfit)
 S3method(vec_arith,eloo)
 S3method(vec_arith,numeric.eloo)

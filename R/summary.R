@@ -43,13 +43,17 @@
                 as.matrix(stanfit, stringr::str_c("prior_", stan_par))
         dplyr::mutate(
                 df,
-                !!stan_par := apply(calibrations, 2, median),
-                mad = apply(calibrations, 2, mad),
+                median = apply(calibrations, 2, stats::median),
+                mad = apply(calibrations, 2, stats::mad),
                 relative_entropy =
                         magrittr::subtract(
                                 apply(prior_calibrations, 2, .kl_entropy),
                                 apply(calibrations, 2, .kl_entropy)
-                        )
+                        ),
+                 `5%` = apply(ability, 2, stats::quantile, 0.05),
+                `25%` = apply(ability, 2, stats::quantile, 0.25),
+                `75%` = apply(ability, 2, stats::quantile, 0.75),
+                `95%` = apply(ability, 2, stats::quantile, 0.95)
         )
 }
 
@@ -189,6 +193,9 @@
 }
 
 # Exports ----------------------------------------------------------------------
+
+#' @export
+print.rdfit <- function(x, ...) print(x$stanfit, ...)
 
 #' @export
 summary.rdfit <- function(object, ..., use_loo = NULL) {
