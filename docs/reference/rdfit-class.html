@@ -269,14 +269,22 @@ Used to convert between the logit and standard scales.</p></li>
 <li><p>posterior predictive distribution</p><ul>
 <li><p><code>y_rep</code>: predicted score for each observed combination of
 group, person, and item</p></li>
-<li><p><code>prior_group_ability</code> (sampled under posterior hyper-parameters)</p></li>
-<li><p><code>prior_person_ability</code> (sampled under posterior hyper-parameters)</p></li>
-<li><p><code>prior_testlet_difficulty</code> (sampled under posterior hyper-parameters)</p></li>
-<li><p><code>prior_item_difficulty</code> (sampled under posterior hyper-parameters)</p></li>
 </ul></li>
 <li><p>log likelihoods</p><ul>
 <li><p><code>log_lik</code>: log likelihood of observed scores</p></li>
 <li><p><code>log_lik_rep</code>: log likelihood of predicted scores</p></li>
+<li><p><code>prior_log_lik_group_ability</code> prior log likelihood of group abilities
+(under posterior hyper-parameter
+values)</p></li>
+<li><p><code>prior_log_lik_person_ability</code> prior log likelihood of person
+abilities (under posterior
+hyper-parameter values)</p></li>
+<li><p><code>prior_log_lik_testlet_difficulty</code> prior log likelihood of testlet
+difficulties (under posterior
+hyper-parameter values)</p></li>
+<li><p><code>prior_log_lik_item_difficulty</code> prior log likelihood of item
+difficulties (under posterior
+hyper-parameter values)</p></li>
 </ul></li>
 <li><p>logit-scale parameters (when <code>pars = "logit"</code> or <code>pars = "hyper"</code>)</p><ul>
 <li><p><code>xi</code>: group abilities</p></li>
@@ -292,6 +300,7 @@ difficulty (if any rating-scale items are present)</p></li>
 <li><p><code>phi</code>: scale of person abilities (relative to group)</p></li>
 <li><p><code>theta_epsilon</code>: scale of testlet difficulties</p></li>
 <li><p><code>theta_upsilon</code>: scale of item difficulties (relative to testlet)</p></li>
+<li><p><code>theta</code>: scale of item difficulties (overall)</p></li>
 </ul></li>
 </ul></p></dd>
 

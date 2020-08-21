@@ -843,13 +843,13 @@ public:
         names__.push_back("sigma");
         names__.push_back("theta");
         names__.push_back("testlet_difficulty");
-        names__.push_back("prior_log_lik_testlet_difficulty");
         names__.push_back("item_difficulty");
-        names__.push_back("prior_log_lik_item_difficulty");
         names__.push_back("thresholds");
         names__.push_back("group_ability");
-        names__.push_back("prior_log_lik_group_ability");
         names__.push_back("person_ability");
+        names__.push_back("prior_log_lik_testlet_difficulty");
+        names__.push_back("prior_log_lik_item_difficulty");
+        names__.push_back("prior_log_lik_group_ability");
         names__.push_back("prior_log_lik_person_ability");
         names__.push_back("y_rep");
         names__.push_back("log_lik");
@@ -912,12 +912,6 @@ public:
         dims__.push_back(L);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(L);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dims__.push_back(I);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
         dims__.push_back(I);
         dimss__.push_back(dims__);
         dims__.resize(0);
@@ -927,10 +921,16 @@ public:
         dims__.push_back(M);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(M);
+        dims__.push_back(N);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(N);
+        dims__.push_back(L);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(I);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(M);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(N);
@@ -1122,44 +1122,44 @@ public:
             stan::math::fill(testlet_difficulty, DUMMY_VAR__);
             stan::math::assign(testlet_difficulty,divide(epsilon, sigma));
             current_statement_begin__ = 121;
-            validate_non_negative_index("prior_log_lik_testlet_difficulty", "L", L);
-            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_testlet_difficulty(L);
-            stan::math::initialize(prior_log_lik_testlet_difficulty, DUMMY_VAR__);
-            stan::math::fill(prior_log_lik_testlet_difficulty, DUMMY_VAR__);
-            current_statement_begin__ = 122;
             validate_non_negative_index("item_difficulty", "I", I);
             Eigen::Matrix<double, Eigen::Dynamic, 1> item_difficulty(I);
             stan::math::initialize(item_difficulty, DUMMY_VAR__);
             stan::math::fill(item_difficulty, DUMMY_VAR__);
             stan::math::assign(item_difficulty,divide(delta, sigma));
-            current_statement_begin__ = 123;
-            validate_non_negative_index("prior_log_lik_item_difficulty", "I", I);
-            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_item_difficulty(I);
-            stan::math::initialize(prior_log_lik_item_difficulty, DUMMY_VAR__);
-            stan::math::fill(prior_log_lik_item_difficulty, DUMMY_VAR__);
-            current_statement_begin__ = 124;
+            current_statement_begin__ = 122;
             validate_non_negative_index("thresholds", "K", K);
             Eigen::Matrix<double, Eigen::Dynamic, 1> thresholds(K);
             stan::math::initialize(thresholds, DUMMY_VAR__);
             stan::math::fill(thresholds, DUMMY_VAR__);
             stan::math::assign(thresholds,divide(tau, sigma));
-            current_statement_begin__ = 125;
+            current_statement_begin__ = 123;
             validate_non_negative_index("group_ability", "M", M);
             Eigen::Matrix<double, Eigen::Dynamic, 1> group_ability(M);
             stan::math::initialize(group_ability, DUMMY_VAR__);
             stan::math::fill(group_ability, DUMMY_VAR__);
             stan::math::assign(group_ability,divide(xi, sigma));
-            current_statement_begin__ = 126;
-            validate_non_negative_index("prior_log_lik_group_ability", "M", M);
-            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_group_ability(M);
-            stan::math::initialize(prior_log_lik_group_ability, DUMMY_VAR__);
-            stan::math::fill(prior_log_lik_group_ability, DUMMY_VAR__);
-            current_statement_begin__ = 127;
+            current_statement_begin__ = 124;
             validate_non_negative_index("person_ability", "N", N);
             Eigen::Matrix<double, Eigen::Dynamic, 1> person_ability(N);
             stan::math::initialize(person_ability, DUMMY_VAR__);
             stan::math::fill(person_ability, DUMMY_VAR__);
             stan::math::assign(person_ability,divide(eta, sigma));
+            current_statement_begin__ = 125;
+            validate_non_negative_index("prior_log_lik_testlet_difficulty", "L", L);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_testlet_difficulty(L);
+            stan::math::initialize(prior_log_lik_testlet_difficulty, DUMMY_VAR__);
+            stan::math::fill(prior_log_lik_testlet_difficulty, DUMMY_VAR__);
+            current_statement_begin__ = 126;
+            validate_non_negative_index("prior_log_lik_item_difficulty", "I", I);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_item_difficulty(I);
+            stan::math::initialize(prior_log_lik_item_difficulty, DUMMY_VAR__);
+            stan::math::fill(prior_log_lik_item_difficulty, DUMMY_VAR__);
+            current_statement_begin__ = 127;
+            validate_non_negative_index("prior_log_lik_group_ability", "M", M);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_group_ability(M);
+            stan::math::initialize(prior_log_lik_group_ability, DUMMY_VAR__);
+            stan::math::fill(prior_log_lik_group_ability, DUMMY_VAR__);
             current_statement_begin__ = 128;
             validate_non_negative_index("prior_log_lik_person_ability", "N", N);
             Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_person_ability(N);
@@ -1301,39 +1301,39 @@ public:
                 vars__.push_back(testlet_difficulty(j_1__));
             }
             current_statement_begin__ = 121;
-            size_t prior_log_lik_testlet_difficulty_j_1_max__ = L;
-            for (size_t j_1__ = 0; j_1__ < prior_log_lik_testlet_difficulty_j_1_max__; ++j_1__) {
-                vars__.push_back(prior_log_lik_testlet_difficulty(j_1__));
-            }
-            current_statement_begin__ = 122;
             size_t item_difficulty_j_1_max__ = I;
             for (size_t j_1__ = 0; j_1__ < item_difficulty_j_1_max__; ++j_1__) {
                 vars__.push_back(item_difficulty(j_1__));
             }
-            current_statement_begin__ = 123;
-            size_t prior_log_lik_item_difficulty_j_1_max__ = I;
-            for (size_t j_1__ = 0; j_1__ < prior_log_lik_item_difficulty_j_1_max__; ++j_1__) {
-                vars__.push_back(prior_log_lik_item_difficulty(j_1__));
-            }
-            current_statement_begin__ = 124;
+            current_statement_begin__ = 122;
             size_t thresholds_j_1_max__ = K;
             for (size_t j_1__ = 0; j_1__ < thresholds_j_1_max__; ++j_1__) {
                 vars__.push_back(thresholds(j_1__));
             }
-            current_statement_begin__ = 125;
+            current_statement_begin__ = 123;
             size_t group_ability_j_1_max__ = M;
             for (size_t j_1__ = 0; j_1__ < group_ability_j_1_max__; ++j_1__) {
                 vars__.push_back(group_ability(j_1__));
             }
-            current_statement_begin__ = 126;
-            size_t prior_log_lik_group_ability_j_1_max__ = M;
-            for (size_t j_1__ = 0; j_1__ < prior_log_lik_group_ability_j_1_max__; ++j_1__) {
-                vars__.push_back(prior_log_lik_group_ability(j_1__));
-            }
-            current_statement_begin__ = 127;
+            current_statement_begin__ = 124;
             size_t person_ability_j_1_max__ = N;
             for (size_t j_1__ = 0; j_1__ < person_ability_j_1_max__; ++j_1__) {
                 vars__.push_back(person_ability(j_1__));
+            }
+            current_statement_begin__ = 125;
+            size_t prior_log_lik_testlet_difficulty_j_1_max__ = L;
+            for (size_t j_1__ = 0; j_1__ < prior_log_lik_testlet_difficulty_j_1_max__; ++j_1__) {
+                vars__.push_back(prior_log_lik_testlet_difficulty(j_1__));
+            }
+            current_statement_begin__ = 126;
+            size_t prior_log_lik_item_difficulty_j_1_max__ = I;
+            for (size_t j_1__ = 0; j_1__ < prior_log_lik_item_difficulty_j_1_max__; ++j_1__) {
+                vars__.push_back(prior_log_lik_item_difficulty(j_1__));
+            }
+            current_statement_begin__ = 127;
+            size_t prior_log_lik_group_ability_j_1_max__ = M;
+            for (size_t j_1__ = 0; j_1__ < prior_log_lik_group_ability_j_1_max__; ++j_1__) {
+                vars__.push_back(prior_log_lik_group_ability(j_1__));
             }
             current_statement_begin__ = 128;
             size_t prior_log_lik_person_ability_j_1_max__ = N;
@@ -1489,22 +1489,10 @@ public:
             param_name_stream__ << "testlet_difficulty" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t prior_log_lik_testlet_difficulty_j_1_max__ = L;
-        for (size_t j_1__ = 0; j_1__ < prior_log_lik_testlet_difficulty_j_1_max__; ++j_1__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "prior_log_lik_testlet_difficulty" << '.' << j_1__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
         size_t item_difficulty_j_1_max__ = I;
         for (size_t j_1__ = 0; j_1__ < item_difficulty_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "item_difficulty" << '.' << j_1__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
-        size_t prior_log_lik_item_difficulty_j_1_max__ = I;
-        for (size_t j_1__ = 0; j_1__ < prior_log_lik_item_difficulty_j_1_max__; ++j_1__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "prior_log_lik_item_difficulty" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         size_t thresholds_j_1_max__ = K;
@@ -1519,16 +1507,28 @@ public:
             param_name_stream__ << "group_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t prior_log_lik_group_ability_j_1_max__ = M;
-        for (size_t j_1__ = 0; j_1__ < prior_log_lik_group_ability_j_1_max__; ++j_1__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "prior_log_lik_group_ability" << '.' << j_1__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
         size_t person_ability_j_1_max__ = N;
         for (size_t j_1__ = 0; j_1__ < person_ability_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "person_ability" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t prior_log_lik_testlet_difficulty_j_1_max__ = L;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_testlet_difficulty_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_testlet_difficulty" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t prior_log_lik_item_difficulty_j_1_max__ = I;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_item_difficulty_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_item_difficulty" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t prior_log_lik_group_ability_j_1_max__ = M;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_group_ability_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_group_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         size_t prior_log_lik_person_ability_j_1_max__ = N;
@@ -1660,22 +1660,10 @@ public:
             param_name_stream__ << "testlet_difficulty" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t prior_log_lik_testlet_difficulty_j_1_max__ = L;
-        for (size_t j_1__ = 0; j_1__ < prior_log_lik_testlet_difficulty_j_1_max__; ++j_1__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "prior_log_lik_testlet_difficulty" << '.' << j_1__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
         size_t item_difficulty_j_1_max__ = I;
         for (size_t j_1__ = 0; j_1__ < item_difficulty_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "item_difficulty" << '.' << j_1__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
-        size_t prior_log_lik_item_difficulty_j_1_max__ = I;
-        for (size_t j_1__ = 0; j_1__ < prior_log_lik_item_difficulty_j_1_max__; ++j_1__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "prior_log_lik_item_difficulty" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         size_t thresholds_j_1_max__ = K;
@@ -1690,16 +1678,28 @@ public:
             param_name_stream__ << "group_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t prior_log_lik_group_ability_j_1_max__ = M;
-        for (size_t j_1__ = 0; j_1__ < prior_log_lik_group_ability_j_1_max__; ++j_1__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "prior_log_lik_group_ability" << '.' << j_1__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
         size_t person_ability_j_1_max__ = N;
         for (size_t j_1__ = 0; j_1__ < person_ability_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "person_ability" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t prior_log_lik_testlet_difficulty_j_1_max__ = L;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_testlet_difficulty_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_testlet_difficulty" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t prior_log_lik_item_difficulty_j_1_max__ = I;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_item_difficulty_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_item_difficulty" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t prior_log_lik_group_ability_j_1_max__ = M;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_group_ability_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_group_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         size_t prior_log_lik_person_ability_j_1_max__ = N;
