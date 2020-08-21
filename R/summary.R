@@ -39,21 +39,25 @@
                 }
         calibrations <-
                 as.matrix(stanfit, stan_par)[, purrr::pluck(df, stan_id)]
-        prior_calibrations <-
-                as.matrix(stanfit, stringr::str_c("prior_", stan_par))
+        prior_log_lik <-
+                as.matrix(stanfit, stringr::str_c("prior_log_lik_", stan_par))[
+                        , purrr::pluck(df, stan_id)
+                ]
         dplyr::mutate(
                 df,
                 median = apply(calibrations, 2, stats::median),
                 mad = apply(calibrations, 2, stats::mad),
-                relative_entropy =
+                lindley_information =
                         magrittr::subtract(
-                                apply(prior_calibrations, 2, .kl_entropy),
+                                ## posterior cross-entropy against prior
+                                apply(prior_log_lik, 2, mean) / -log(2),
+                                ## posterior entropy
                                 apply(calibrations, 2, .kl_entropy)
                         ),
-                 `5%` = apply(ability, 2, stats::quantile, 0.05),
-                `25%` = apply(ability, 2, stats::quantile, 0.25),
-                `75%` = apply(ability, 2, stats::quantile, 0.75),
-                `95%` = apply(ability, 2, stats::quantile, 0.95)
+                 `5%` = apply(calibrations, 2, stats::quantile, 0.05),
+                `25%` = apply(calibrations, 2, stats::quantile, 0.25),
+                `75%` = apply(calibrations, 2, stats::quantile, 0.75),
+                `95%` = apply(calibrations, 2, stats::quantile, 0.95)
         )
 }
 

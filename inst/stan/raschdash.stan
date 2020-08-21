@@ -115,23 +115,48 @@ model {
 
 generated quantities {
         real<lower=0> sigma = sqrt(square(psi) + square(phi));
+        real<lower=0> theta =
+                sqrt(square(theta_epsilon) + square(theta_upsilon));
         vector[L] testlet_difficulty = epsilon / sigma;
-        real prior_testlet_difficulty = normal_rng(nu, theta_epsilon / sigma);
         vector[I] item_difficulty = delta / sigma;
-        real prior_item_difficulty =
-                prior_testlet_difficulty + normal_rng(0, theta_upsilon / sigma);
         vector[K] thresholds = tau / sigma;
         vector[M] group_ability = xi / sigma;
-        real prior_group_ability = normal_rng(0, psi / sigma);
         vector[N] person_ability = eta / sigma;
-        real prior_person_ability =
-                prior_group_ability + normal_rng(0, phi / sigma);
-        // Expected ratings and entropies can be computed from
-        // replications, but we need two prior versions, one with
-        // persons freed and one with items freed.
+        vector[L] prior_log_lik_testlet_difficulty;
+        vector[I] prior_log_lik_item_difficulty;
+        vector[M] prior_log_lik_group_ability;
+        vector[N] prior_log_lik_person_ability;
         int<lower=0> y_rep[O];
         vector[O] log_lik;
         vector[O] log_lik_rep;
+        // Vectorised lpdf functions in Stan return sums by default, and so
+        // for loops are necessary to retain all individual values. Beware that
+        // scaling affects continuous probability densities! It is crucial to
+        // work on scaled values.
+        for (l in 1:L) {
+                prior_log_lik_testlet_difficulty[l] =
+                        normal_lpdf(
+                                testlet_difficulty[l] |
+                                nu / sigma,
+                                theta_epsilon / sigma
+                        );
+        }
+        for (i in 1:I) {
+                prior_log_lik_item_difficulty[i] =
+                        normal_lpdf(
+                                item_difficulty[i] |
+                                nu / sigma,
+                                theta / sigma
+                        );
+        }
+        for (m in 1:M) {
+                prior_log_lik_group_ability[m] =
+                        normal_lpdf(group_ability[m] | 0, psi / sigma);
+        }
+        for (n in 1:N) {
+                prior_log_lik_person_ability[n] =
+                        normal_lpdf(person_ability[n] | 0, 1);
+        }
         for (o in 1:O) {
                 int i = ii[o];
                 int k = kk[i];

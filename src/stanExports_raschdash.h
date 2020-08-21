@@ -33,7 +33,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_raschdash");
-    reader.add_event(157, 155, "end", "model_raschdash");
+    reader.add_event(182, 180, "end", "model_raschdash");
     return reader;
 }
 template <bool propto, typename T1__>
@@ -841,15 +841,16 @@ public:
         names__.push_back("theta_epsilon");
         names__.push_back("psi");
         names__.push_back("sigma");
+        names__.push_back("theta");
         names__.push_back("testlet_difficulty");
-        names__.push_back("prior_testlet_difficulty");
+        names__.push_back("prior_log_lik_testlet_difficulty");
         names__.push_back("item_difficulty");
-        names__.push_back("prior_item_difficulty");
+        names__.push_back("prior_log_lik_item_difficulty");
         names__.push_back("thresholds");
         names__.push_back("group_ability");
-        names__.push_back("prior_group_ability");
+        names__.push_back("prior_log_lik_group_ability");
         names__.push_back("person_ability");
-        names__.push_back("prior_person_ability");
+        names__.push_back("prior_log_lik_person_ability");
         names__.push_back("y_rep");
         names__.push_back("log_lik");
         names__.push_back("log_lik_rep");
@@ -906,14 +907,18 @@ public:
         dims__.resize(0);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
         dims__.push_back(L);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(L);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(I);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(I);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(K);
@@ -922,11 +927,13 @@ public:
         dims__.push_back(M);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(M);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(N);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(N);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(O);
@@ -1103,143 +1110,177 @@ public:
             stan::math::fill(sigma, DUMMY_VAR__);
             stan::math::assign(sigma,stan::math::sqrt((square(psi) + square(phi))));
             current_statement_begin__ = 118;
+            double theta;
+            (void) theta;  // dummy to suppress unused var warning
+            stan::math::initialize(theta, DUMMY_VAR__);
+            stan::math::fill(theta, DUMMY_VAR__);
+            stan::math::assign(theta,stan::math::sqrt((square(theta_epsilon) + square(theta_upsilon))));
+            current_statement_begin__ = 120;
             validate_non_negative_index("testlet_difficulty", "L", L);
             Eigen::Matrix<double, Eigen::Dynamic, 1> testlet_difficulty(L);
             stan::math::initialize(testlet_difficulty, DUMMY_VAR__);
             stan::math::fill(testlet_difficulty, DUMMY_VAR__);
             stan::math::assign(testlet_difficulty,divide(epsilon, sigma));
-            current_statement_begin__ = 119;
-            double prior_testlet_difficulty;
-            (void) prior_testlet_difficulty;  // dummy to suppress unused var warning
-            stan::math::initialize(prior_testlet_difficulty, DUMMY_VAR__);
-            stan::math::fill(prior_testlet_difficulty, DUMMY_VAR__);
-            stan::math::assign(prior_testlet_difficulty,normal_rng(nu, (theta_epsilon / sigma), base_rng__));
-            current_statement_begin__ = 120;
+            current_statement_begin__ = 121;
+            validate_non_negative_index("prior_log_lik_testlet_difficulty", "L", L);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_testlet_difficulty(L);
+            stan::math::initialize(prior_log_lik_testlet_difficulty, DUMMY_VAR__);
+            stan::math::fill(prior_log_lik_testlet_difficulty, DUMMY_VAR__);
+            current_statement_begin__ = 122;
             validate_non_negative_index("item_difficulty", "I", I);
             Eigen::Matrix<double, Eigen::Dynamic, 1> item_difficulty(I);
             stan::math::initialize(item_difficulty, DUMMY_VAR__);
             stan::math::fill(item_difficulty, DUMMY_VAR__);
             stan::math::assign(item_difficulty,divide(delta, sigma));
-            current_statement_begin__ = 121;
-            double prior_item_difficulty;
-            (void) prior_item_difficulty;  // dummy to suppress unused var warning
-            stan::math::initialize(prior_item_difficulty, DUMMY_VAR__);
-            stan::math::fill(prior_item_difficulty, DUMMY_VAR__);
-            stan::math::assign(prior_item_difficulty,(prior_testlet_difficulty + normal_rng(0, (theta_upsilon / sigma), base_rng__)));
             current_statement_begin__ = 123;
+            validate_non_negative_index("prior_log_lik_item_difficulty", "I", I);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_item_difficulty(I);
+            stan::math::initialize(prior_log_lik_item_difficulty, DUMMY_VAR__);
+            stan::math::fill(prior_log_lik_item_difficulty, DUMMY_VAR__);
+            current_statement_begin__ = 124;
             validate_non_negative_index("thresholds", "K", K);
             Eigen::Matrix<double, Eigen::Dynamic, 1> thresholds(K);
             stan::math::initialize(thresholds, DUMMY_VAR__);
             stan::math::fill(thresholds, DUMMY_VAR__);
             stan::math::assign(thresholds,divide(tau, sigma));
-            current_statement_begin__ = 124;
+            current_statement_begin__ = 125;
             validate_non_negative_index("group_ability", "M", M);
             Eigen::Matrix<double, Eigen::Dynamic, 1> group_ability(M);
             stan::math::initialize(group_ability, DUMMY_VAR__);
             stan::math::fill(group_ability, DUMMY_VAR__);
             stan::math::assign(group_ability,divide(xi, sigma));
-            current_statement_begin__ = 125;
-            double prior_group_ability;
-            (void) prior_group_ability;  // dummy to suppress unused var warning
-            stan::math::initialize(prior_group_ability, DUMMY_VAR__);
-            stan::math::fill(prior_group_ability, DUMMY_VAR__);
-            stan::math::assign(prior_group_ability,normal_rng(0, (psi / sigma), base_rng__));
             current_statement_begin__ = 126;
+            validate_non_negative_index("prior_log_lik_group_ability", "M", M);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_group_ability(M);
+            stan::math::initialize(prior_log_lik_group_ability, DUMMY_VAR__);
+            stan::math::fill(prior_log_lik_group_ability, DUMMY_VAR__);
+            current_statement_begin__ = 127;
             validate_non_negative_index("person_ability", "N", N);
             Eigen::Matrix<double, Eigen::Dynamic, 1> person_ability(N);
             stan::math::initialize(person_ability, DUMMY_VAR__);
             stan::math::fill(person_ability, DUMMY_VAR__);
             stan::math::assign(person_ability,divide(eta, sigma));
-            current_statement_begin__ = 127;
-            double prior_person_ability;
-            (void) prior_person_ability;  // dummy to suppress unused var warning
-            stan::math::initialize(prior_person_ability, DUMMY_VAR__);
-            stan::math::fill(prior_person_ability, DUMMY_VAR__);
-            stan::math::assign(prior_person_ability,(prior_group_ability + normal_rng(0, (phi / sigma), base_rng__)));
-            current_statement_begin__ = 132;
+            current_statement_begin__ = 128;
+            validate_non_negative_index("prior_log_lik_person_ability", "N", N);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> prior_log_lik_person_ability(N);
+            stan::math::initialize(prior_log_lik_person_ability, DUMMY_VAR__);
+            stan::math::fill(prior_log_lik_person_ability, DUMMY_VAR__);
+            current_statement_begin__ = 129;
             validate_non_negative_index("y_rep", "O", O);
             std::vector<int> y_rep(O, int(0));
             stan::math::fill(y_rep, std::numeric_limits<int>::min());
-            current_statement_begin__ = 133;
+            current_statement_begin__ = 130;
             validate_non_negative_index("log_lik", "O", O);
             Eigen::Matrix<double, Eigen::Dynamic, 1> log_lik(O);
             stan::math::initialize(log_lik, DUMMY_VAR__);
             stan::math::fill(log_lik, DUMMY_VAR__);
-            current_statement_begin__ = 134;
+            current_statement_begin__ = 131;
             validate_non_negative_index("log_lik_rep", "O", O);
             Eigen::Matrix<double, Eigen::Dynamic, 1> log_lik_rep(O);
             stan::math::initialize(log_lik_rep, DUMMY_VAR__);
             stan::math::fill(log_lik_rep, DUMMY_VAR__);
             // generated quantities statements
-            current_statement_begin__ = 135;
+            current_statement_begin__ = 136;
+            for (int l = 1; l <= L; ++l) {
+                current_statement_begin__ = 137;
+                stan::model::assign(prior_log_lik_testlet_difficulty, 
+                            stan::model::cons_list(stan::model::index_uni(l), stan::model::nil_index_list()), 
+                            normal_log(get_base1(testlet_difficulty, l, "testlet_difficulty", 1), (nu / sigma), (theta_epsilon / sigma)), 
+                            "assigning variable prior_log_lik_testlet_difficulty");
+            }
+            current_statement_begin__ = 144;
+            for (int i = 1; i <= I; ++i) {
+                current_statement_begin__ = 145;
+                stan::model::assign(prior_log_lik_item_difficulty, 
+                            stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
+                            normal_log(get_base1(item_difficulty, i, "item_difficulty", 1), (nu / sigma), (theta / sigma)), 
+                            "assigning variable prior_log_lik_item_difficulty");
+            }
+            current_statement_begin__ = 152;
+            for (int m = 1; m <= M; ++m) {
+                current_statement_begin__ = 153;
+                stan::model::assign(prior_log_lik_group_ability, 
+                            stan::model::cons_list(stan::model::index_uni(m), stan::model::nil_index_list()), 
+                            normal_log(get_base1(group_ability, m, "group_ability", 1), 0, (psi / sigma)), 
+                            "assigning variable prior_log_lik_group_ability");
+            }
+            current_statement_begin__ = 156;
+            for (int n = 1; n <= N; ++n) {
+                current_statement_begin__ = 157;
+                stan::model::assign(prior_log_lik_person_ability, 
+                            stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
+                            normal_log(get_base1(person_ability, n, "person_ability", 1), 0, 1), 
+                            "assigning variable prior_log_lik_person_ability");
+            }
+            current_statement_begin__ = 160;
             for (int o = 1; o <= O; ++o) {
                 {
-                current_statement_begin__ = 136;
+                current_statement_begin__ = 161;
                 int i(0);
                 (void) i;  // dummy to suppress unused var warning
                 stan::math::fill(i, std::numeric_limits<int>::min());
                 stan::math::assign(i,get_base1(ii, o, "ii", 1));
-                current_statement_begin__ = 137;
+                current_statement_begin__ = 162;
                 int k(0);
                 (void) k;  // dummy to suppress unused var warning
                 stan::math::fill(k, std::numeric_limits<int>::min());
                 stan::math::assign(k,get_base1(kk, i, "kk", 1));
-                current_statement_begin__ = 138;
+                current_statement_begin__ = 163;
                 int n(0);
                 (void) n;  // dummy to suppress unused var warning
                 stan::math::fill(n, std::numeric_limits<int>::min());
                 stan::math::assign(n,get_base1(nn, o, "nn", 1));
-                current_statement_begin__ = 139;
+                current_statement_begin__ = 164;
                 local_scalar_t__ beta(DUMMY_VAR__);
                 (void) beta;  // dummy to suppress unused var warning
                 stan::math::initialize(beta, DUMMY_VAR__);
                 stan::math::fill(beta, DUMMY_VAR__);
                 stan::math::assign(beta,((logical_lt(n, 0) ? stan::math::promote_scalar<local_scalar_t__>(get_base1(xi, -(n), "xi", 1)) : stan::math::promote_scalar<local_scalar_t__>(get_base1(eta, n, "eta", 1)) ) - get_base1(delta, i, "delta", 1)));
-                current_statement_begin__ = 140;
+                current_statement_begin__ = 165;
                 if (as_bool(logical_eq(k, 1))) {
-                    current_statement_begin__ = 141;
+                    current_statement_begin__ = 166;
                     stan::model::assign(y_rep, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 bernoulli_logit_rng(beta, base_rng__), 
                                 "assigning variable y_rep");
-                    current_statement_begin__ = 142;
+                    current_statement_begin__ = 167;
                     stan::model::assign(log_lik, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 bernoulli_logit_log(get_base1(y, o, "y", 1), beta), 
                                 "assigning variable log_lik");
-                    current_statement_begin__ = 143;
+                    current_statement_begin__ = 168;
                     stan::model::assign(log_lik_rep, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 bernoulli_logit_log(get_base1(y_rep, o, "y_rep", 1), beta), 
                                 "assigning variable log_lik_rep");
                 } else if (as_bool(logical_eq(k, K))) {
-                    current_statement_begin__ = 145;
+                    current_statement_begin__ = 170;
                     stan::model::assign(y_rep, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 rsm_rng(subtract(beta, tau), base_rng__, pstream__), 
                                 "assigning variable y_rep");
-                    current_statement_begin__ = 146;
+                    current_statement_begin__ = 171;
                     stan::model::assign(log_lik, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 rsm_lpmf(get_base1(y, o, "y", 1), subtract(beta, tau), pstream__), 
                                 "assigning variable log_lik");
-                    current_statement_begin__ = 147;
+                    current_statement_begin__ = 172;
                     stan::model::assign(log_lik_rep, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 rsm_lpmf(get_base1(y_rep, o, "y_rep", 1), subtract(beta, tau), pstream__), 
                                 "assigning variable log_lik_rep");
                 } else {
-                    current_statement_begin__ = 149;
+                    current_statement_begin__ = 174;
                     stan::model::assign(y_rep, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 binomial_rng(k, inv_logit(beta), base_rng__), 
                                 "assigning variable y_rep");
-                    current_statement_begin__ = 150;
+                    current_statement_begin__ = 175;
                     stan::model::assign(log_lik, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 binomial_logit_log(get_base1(y, o, "y", 1), k, beta), 
                                 "assigning variable log_lik");
-                    current_statement_begin__ = 151;
+                    current_statement_begin__ = 176;
                     stan::model::assign(log_lik_rep, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 binomial_logit_log(get_base1(y_rep, o, "y_rep", 1), k, beta), 
@@ -1252,39 +1293,54 @@ public:
             check_greater_or_equal(function__, "sigma", sigma, 0);
             vars__.push_back(sigma);
             current_statement_begin__ = 118;
+            check_greater_or_equal(function__, "theta", theta, 0);
+            vars__.push_back(theta);
+            current_statement_begin__ = 120;
             size_t testlet_difficulty_j_1_max__ = L;
             for (size_t j_1__ = 0; j_1__ < testlet_difficulty_j_1_max__; ++j_1__) {
                 vars__.push_back(testlet_difficulty(j_1__));
             }
-            current_statement_begin__ = 119;
-            vars__.push_back(prior_testlet_difficulty);
-            current_statement_begin__ = 120;
+            current_statement_begin__ = 121;
+            size_t prior_log_lik_testlet_difficulty_j_1_max__ = L;
+            for (size_t j_1__ = 0; j_1__ < prior_log_lik_testlet_difficulty_j_1_max__; ++j_1__) {
+                vars__.push_back(prior_log_lik_testlet_difficulty(j_1__));
+            }
+            current_statement_begin__ = 122;
             size_t item_difficulty_j_1_max__ = I;
             for (size_t j_1__ = 0; j_1__ < item_difficulty_j_1_max__; ++j_1__) {
                 vars__.push_back(item_difficulty(j_1__));
             }
-            current_statement_begin__ = 121;
-            vars__.push_back(prior_item_difficulty);
             current_statement_begin__ = 123;
+            size_t prior_log_lik_item_difficulty_j_1_max__ = I;
+            for (size_t j_1__ = 0; j_1__ < prior_log_lik_item_difficulty_j_1_max__; ++j_1__) {
+                vars__.push_back(prior_log_lik_item_difficulty(j_1__));
+            }
+            current_statement_begin__ = 124;
             size_t thresholds_j_1_max__ = K;
             for (size_t j_1__ = 0; j_1__ < thresholds_j_1_max__; ++j_1__) {
                 vars__.push_back(thresholds(j_1__));
             }
-            current_statement_begin__ = 124;
+            current_statement_begin__ = 125;
             size_t group_ability_j_1_max__ = M;
             for (size_t j_1__ = 0; j_1__ < group_ability_j_1_max__; ++j_1__) {
                 vars__.push_back(group_ability(j_1__));
             }
-            current_statement_begin__ = 125;
-            vars__.push_back(prior_group_ability);
             current_statement_begin__ = 126;
+            size_t prior_log_lik_group_ability_j_1_max__ = M;
+            for (size_t j_1__ = 0; j_1__ < prior_log_lik_group_ability_j_1_max__; ++j_1__) {
+                vars__.push_back(prior_log_lik_group_ability(j_1__));
+            }
+            current_statement_begin__ = 127;
             size_t person_ability_j_1_max__ = N;
             for (size_t j_1__ = 0; j_1__ < person_ability_j_1_max__; ++j_1__) {
                 vars__.push_back(person_ability(j_1__));
             }
-            current_statement_begin__ = 127;
-            vars__.push_back(prior_person_ability);
-            current_statement_begin__ = 132;
+            current_statement_begin__ = 128;
+            size_t prior_log_lik_person_ability_j_1_max__ = N;
+            for (size_t j_1__ = 0; j_1__ < prior_log_lik_person_ability_j_1_max__; ++j_1__) {
+                vars__.push_back(prior_log_lik_person_ability(j_1__));
+            }
+            current_statement_begin__ = 129;
             size_t y_rep_i_0_max__ = O;
             for (size_t i_0__ = 0; i_0__ < y_rep_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "y_rep[i_0__]", y_rep[i_0__], 0);
@@ -1293,12 +1349,12 @@ public:
             for (size_t k_0__ = 0; k_0__ < y_rep_k_0_max__; ++k_0__) {
                 vars__.push_back(y_rep[k_0__]);
             }
-            current_statement_begin__ = 133;
+            current_statement_begin__ = 130;
             size_t log_lik_j_1_max__ = O;
             for (size_t j_1__ = 0; j_1__ < log_lik_j_1_max__; ++j_1__) {
                 vars__.push_back(log_lik(j_1__));
             }
-            current_statement_begin__ = 134;
+            current_statement_begin__ = 131;
             size_t log_lik_rep_j_1_max__ = O;
             for (size_t j_1__ = 0; j_1__ < log_lik_rep_j_1_max__; ++j_1__) {
                 vars__.push_back(log_lik_rep(j_1__));
@@ -1424,24 +1480,33 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "sigma";
         param_names__.push_back(param_name_stream__.str());
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "theta";
+        param_names__.push_back(param_name_stream__.str());
         size_t testlet_difficulty_j_1_max__ = L;
         for (size_t j_1__ = 0; j_1__ < testlet_difficulty_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "testlet_difficulty" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "prior_testlet_difficulty";
-        param_names__.push_back(param_name_stream__.str());
+        size_t prior_log_lik_testlet_difficulty_j_1_max__ = L;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_testlet_difficulty_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_testlet_difficulty" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
         size_t item_difficulty_j_1_max__ = I;
         for (size_t j_1__ = 0; j_1__ < item_difficulty_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "item_difficulty" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "prior_item_difficulty";
-        param_names__.push_back(param_name_stream__.str());
+        size_t prior_log_lik_item_difficulty_j_1_max__ = I;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_item_difficulty_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_item_difficulty" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
         size_t thresholds_j_1_max__ = K;
         for (size_t j_1__ = 0; j_1__ < thresholds_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
@@ -1454,18 +1519,24 @@ public:
             param_name_stream__ << "group_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "prior_group_ability";
-        param_names__.push_back(param_name_stream__.str());
+        size_t prior_log_lik_group_ability_j_1_max__ = M;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_group_ability_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_group_ability" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
         size_t person_ability_j_1_max__ = N;
         for (size_t j_1__ = 0; j_1__ < person_ability_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "person_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "prior_person_ability";
-        param_names__.push_back(param_name_stream__.str());
+        size_t prior_log_lik_person_ability_j_1_max__ = N;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_person_ability_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_person_ability" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
         size_t y_rep_k_0_max__ = O;
         for (size_t k_0__ = 0; k_0__ < y_rep_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
@@ -1580,24 +1651,33 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "sigma";
         param_names__.push_back(param_name_stream__.str());
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "theta";
+        param_names__.push_back(param_name_stream__.str());
         size_t testlet_difficulty_j_1_max__ = L;
         for (size_t j_1__ = 0; j_1__ < testlet_difficulty_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "testlet_difficulty" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "prior_testlet_difficulty";
-        param_names__.push_back(param_name_stream__.str());
+        size_t prior_log_lik_testlet_difficulty_j_1_max__ = L;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_testlet_difficulty_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_testlet_difficulty" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
         size_t item_difficulty_j_1_max__ = I;
         for (size_t j_1__ = 0; j_1__ < item_difficulty_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "item_difficulty" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "prior_item_difficulty";
-        param_names__.push_back(param_name_stream__.str());
+        size_t prior_log_lik_item_difficulty_j_1_max__ = I;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_item_difficulty_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_item_difficulty" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
         size_t thresholds_j_1_max__ = K;
         for (size_t j_1__ = 0; j_1__ < thresholds_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
@@ -1610,18 +1690,24 @@ public:
             param_name_stream__ << "group_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "prior_group_ability";
-        param_names__.push_back(param_name_stream__.str());
+        size_t prior_log_lik_group_ability_j_1_max__ = M;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_group_ability_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_group_ability" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
         size_t person_ability_j_1_max__ = N;
         for (size_t j_1__ = 0; j_1__ < person_ability_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "person_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "prior_person_ability";
-        param_names__.push_back(param_name_stream__.str());
+        size_t prior_log_lik_person_ability_j_1_max__ = N;
+        for (size_t j_1__ = 0; j_1__ < prior_log_lik_person_ability_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "prior_log_lik_person_ability" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
         size_t y_rep_k_0_max__ = O;
         for (size_t k_0__ = 0; k_0__ < y_rep_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
