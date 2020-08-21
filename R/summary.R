@@ -47,17 +47,17 @@
                 df,
                 median = apply(calibrations, 2, stats::median),
                 mad = apply(calibrations, 2, stats::mad),
+                 `5%` = apply(calibrations, 2, stats::quantile, 0.05),
+                `25%` = apply(calibrations, 2, stats::quantile, 0.25),
+                `75%` = apply(calibrations, 2, stats::quantile, 0.75),
+                `95%` = apply(calibrations, 2, stats::quantile, 0.95),
                 lindley_information =
                         magrittr::subtract(
                                 ## posterior cross-entropy against prior
                                 apply(prior_log_lik, 2, mean) / -log(2),
                                 ## posterior entropy
                                 apply(calibrations, 2, .kl_entropy)
-                        ),
-                 `5%` = apply(calibrations, 2, stats::quantile, 0.05),
-                `25%` = apply(calibrations, 2, stats::quantile, 0.25),
-                `75%` = apply(calibrations, 2, stats::quantile, 0.75),
-                `95%` = apply(calibrations, 2, stats::quantile, 0.95)
+                        )
         )
 }
 
