@@ -69,21 +69,13 @@
 #'   * posterior predictive distribution
 #'       * `y_rep`: predicted score for each observed combination of
 #'                  group, person, and item
+#'       * `prior_group_ability` (sampled under posterior hyper-parameters)
+#'       * `prior_person_ability` (sampled under posterior hyper-parameters)
+#'       * `prior_testlet_difficulty` (sampled under posterior hyper-parameters)
+#'       * `prior_item_difficulty` (sampled under posterior hyper-parameters)
 #'   * log likelihoods
 #'       * `log_lik`: log likelihood of observed scores
 #'       * `log_lik_rep`: log likelihood of predicted scores
-#'       * `prior_log_lik_group_ability` prior log likelihood of group abilities
-#'                                       (under posterior hyper-parameter
-#'                                       values)
-#'       * `prior_log_lik_person_ability` prior log likelihood of person
-#'                                        abilities (under posterior
-#'                                        hyper-parameter values)
-#'       * `prior_log_lik_testlet_difficulty` prior log likelihood of testlet
-#'                                            difficulties (under posterior
-#'                                            hyper-parameter values)
-#'       * `prior_log_lik_item_difficulty` prior log likelihood of item
-#'                                         difficulties (under posterior
-#'                                         hyper-parameter values)
 #'   * logit-scale parameters (when `pars = "logit"` or `pars = "hyper"`)
 #'       * `xi`: group abilities
 #'       * `eta`: person abilities
@@ -242,10 +234,10 @@ new_rdfit <- function(cohorts,
                         "thresholds",
                         "y_rep",
                         "log_lik", "log_lik_rep",
-                        "prior_log_lik_group_ability",
-                        "prior_log_lik_person_ability",
-                        "prior_log_lik_testlet_difficulty",
-                        "prior_log_lik_item_difficulty"
+                        "prior_group_ability",
+                        "prior_person_ability",
+                        "prior_testlet_difficulty",
+                        "prior_item_difficulty"
                 )
         LOGIT_PARS <- c("xi", "eta", "epsilon", "delta", "tau")
         HYPER_PARS <- c("psi", "phi", "theta_epsilon", "theta_upsilon", "theta")

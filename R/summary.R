@@ -1,12 +1,5 @@
 # Special functions ------------------------------------------------------------
 
-.kl_entropy <- function(x) {
-        n <- vec_size(x)
-        y <- vec_sort(x)
-        ## Return entropy in bits rather than nats.
-        (mean(log(y[-1] - y[-n])) - digamma(1) + digamma(n)) / log(2)
-}
-
 .heaviside_difference <- function(observed, expected) {
         0.5 * sign(observed - expected) + 0.5
 }
@@ -39,24 +32,27 @@
                 }
         calibrations <-
                 as.matrix(stanfit, stan_par)[, purrr::pluck(df, stan_id)]
-        prior_log_lik <-
-                as.matrix(stanfit, stringr::str_c("prior_log_lik_", stan_par))[
-                        , purrr::pluck(df, stan_id)
-                ]
+        prior_calibrations <-
+                as.matrix(stanfit, stringr::str_c("prior_", stan_par))
         dplyr::mutate(
                 df,
-                median = apply(calibrations, 2, stats::median),
+                calibration = apply(calibrations, 2, stats::median),
                 mad = apply(calibrations, 2, stats::mad),
                  `5%` = apply(calibrations, 2, stats::quantile, 0.05),
                 `25%` = apply(calibrations, 2, stats::quantile, 0.25),
                 `75%` = apply(calibrations, 2, stats::quantile, 0.75),
                 `95%` = apply(calibrations, 2, stats::quantile, 0.95),
+                ## Convert KL divergence from FNN from nats to bits.
                 lindley_information =
-                        magrittr::subtract(
-                                ## posterior cross-entropy against prior
-                                apply(prior_log_lik, 2, mean) / -log(2),
-                                ## posterior entropy
-                                apply(calibrations, 2, .kl_entropy)
+                        magrittr::divide_by(
+                                apply(
+                                        calibrations,
+                                        2,
+                                        FNN::KL.divergence,
+                                        Y = prior_calibrations,
+                                        k = 1
+                                ),
+                                log(2)
                         )
         )
 }

@@ -121,23 +121,15 @@ Used to convert between the logit and standard scales.
 \itemize{
 \item \code{y_rep}: predicted score for each observed combination of
 group, person, and item
+\item \code{prior_group_ability} (sampled under posterior hyper-parameters)
+\item \code{prior_person_ability} (sampled under posterior hyper-parameters)
+\item \code{prior_testlet_difficulty} (sampled under posterior hyper-parameters)
+\item \code{prior_item_difficulty} (sampled under posterior hyper-parameters)
 }
 \item log likelihoods
 \itemize{
 \item \code{log_lik}: log likelihood of observed scores
 \item \code{log_lik_rep}: log likelihood of predicted scores
-\item \code{prior_log_lik_group_ability} prior log likelihood of group abilities
-(under posterior hyper-parameter
-values)
-\item \code{prior_log_lik_person_ability} prior log likelihood of person
-abilities (under posterior
-hyper-parameter values)
-\item \code{prior_log_lik_testlet_difficulty} prior log likelihood of testlet
-difficulties (under posterior
-hyper-parameter values)
-\item \code{prior_log_lik_item_difficulty} prior log likelihood of item
-difficulties (under posterior
-hyper-parameter values)
 }
 \item logit-scale parameters (when \code{pars = "logit"} or \code{pars = "hyper"})
 \itemize{

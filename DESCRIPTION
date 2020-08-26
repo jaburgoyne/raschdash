@@ -28,7 +28,9 @@ Imports:
     rstan (>= 2.18.1),
     rstantools (>= 2.1.1),
     stringr,
-    vctrs
+    vctrs,
+    FNN,
+    Hmisc
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
