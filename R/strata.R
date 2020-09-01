@@ -4,7 +4,7 @@
 count_strata <- function(iota) 2^mean(iota)
 
 #' @export
-markon_reliability <- function(iota) 1 - 1 / count_strata(iota)^2
+markon_reliability <- function(iota) 1 - count_strata(iota)^(-2)
 
 # calibration and iota functions -----------------------------------------------
 
