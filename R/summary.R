@@ -60,8 +60,8 @@
 .add_pp_statistics <- function(df, stanfit, use_loo = FALSE) {
         indices <- purrr::pluck(df, "row")
         .collapse <-
-                if (is_null(indices)) {
-                        function(par) as.matrix(stanfit, par)
+                if (vec_is(indices, integer())) {
+                        function(par) as.matrix(stanfit, par)[, indices]
                 } else {
                         function(par) {
                                 m <- as.matrix(stanfit, par)
@@ -173,7 +173,6 @@
                 } else {
                         identity
                 }
-
         ## In order to support information about persons with or without respect
         ## to their groups, replicate group observations per person whenever
         ## groups are present, and remove group observations entirely whenever
