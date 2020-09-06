@@ -6,7 +6,7 @@
 
 # Internal data manipulation  --------------------------------------------------
 
-.add_calibrations <- function(df, stanfit) {
+.add_calibrations <- function(df, stanfit, mean, sd) {
         par <-
                 if (has_name(df, 'person') && !vec_duplicate_any(df$person)) {
                         'person'
@@ -36,12 +36,16 @@
                 as.matrix(stanfit, stringr::str_c("prior_", stan_par))
         dplyr::mutate(
                 df,
-                calibration = apply(calibrations, 2, stats::median),
-                mad = apply(calibrations, 2, stats::mad),
-                 `5%` = apply(calibrations, 2, stats::quantile, 0.05),
-                `25%` = apply(calibrations, 2, stats::quantile, 0.25),
-                `75%` = apply(calibrations, 2, stats::quantile, 0.75),
-                `95%` = apply(calibrations, 2, stats::quantile, 0.95),
+                calibration = mean + sd * apply(calibrations, 2, stats::median),
+                mad = sd * apply(calibrations, 2, stats::mad),
+                 `5%` = mean +
+                        sd * apply(calibrations, 2, stats::quantile, 0.05),
+                `25%` = mean +
+                        sd * apply(calibrations, 2, stats::quantile, 0.25),
+                `75%` = mean +
+                        sd * apply(calibrations, 2, stats::quantile, 0.75),
+                `95%` = mean +
+                        sd * apply(calibrations, 2, stats::quantile, 0.95),
                 ## Convert KL divergence from FNN from nats to bits.
                 lindley_information =
                         magrittr::divide_by(
@@ -57,7 +61,7 @@
         )
 }
 
-.add_pp_statistics <- function(df, stanfit, use_loo = FALSE) {
+.add_pp_statistics <- function(df, stanfit, use_loo, mark) {
         indices <- purrr::pluck(df, "row")
         .collapse <-
                 if (vec_is(indices, integer())) {
@@ -110,6 +114,7 @@
         dplyr::mutate(
                 df,
                 expected_score = .expectation(y_rep),
+                expected_mark = mark(.data$expected_score / .data$max_score),
                 information_content =
                         if (use_loo) {
                                 new_eloo(
@@ -197,8 +202,9 @@
 print.rdfit <- function(x, ...) print(x$stanfit, ...)
 
 #' @export
-summary.rdfit <- function(object, ..., use_loo = NULL) {
-        ## TODO: Document the output. Note that slop of infit vs qlogis(p_info)
+summary.rdfit <- function(object, ..., use_loo = NULL,
+                          mean = 0, sd = 1, mark = identity) {
+        ## TODO: Document the output. Note that slope of infit vs qlogis(p_info)
         ##       is almost exactly 8, implying that plogis(4) and plogis(8)
         ##       should be infit cutoffs, and plogis(-4) at the bottom.
         purrr::pluck(object, "data") %>%
@@ -206,7 +212,11 @@ summary.rdfit <- function(object, ..., use_loo = NULL) {
                 dplyr::group_by(...) %>%
                 .aggregate_scores() %>%
                 dplyr::ungroup() %>%
-                .add_calibrations(object$stanfit) %>%
+                dplyr::mutate(
+                        observed_mark =
+                                mark(.data$observed_score / .data$max_score)
+                ) %>%
+                .add_calibrations(object$stanfit, mean, sd) %>%
                 .add_pp_statistics(
                         object$stanfit,
                         ## By default, use LOO only for complete observations.
@@ -215,7 +225,8 @@ summary.rdfit <- function(object, ..., use_loo = NULL) {
                                         ...length() == 0
                                 } else {
                                         use_loo
-                                }
+                                },
+                        mark = mark
                 ) %>%
                 dplyr::select(
                         !dplyr::any_of("row") & !dplyr::starts_with("stan_")
