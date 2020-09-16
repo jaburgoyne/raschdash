@@ -36,7 +36,7 @@
                 as.matrix(stanfit, stringr::str_c("prior_", stan_par))
         dplyr::mutate(
                 df,
-                calibration = mean + sd * apply(calibrations, 2, stats::median),
+                !!stan_par := mean + sd * apply(calibrations, 2, stats::median),
                 mad = sd * apply(calibrations, 2, stats::mad),
                  `5%` = mean +
                         sd * apply(calibrations, 2, stats::quantile, 0.05),
@@ -64,16 +64,18 @@
 .add_pp_statistics <- function(df, stanfit, use_loo, mark) {
         indices <- purrr::pluck(df, "row")
         .collapse <-
-                if (vec_is(indices, integer())) {
-                        function(par) as.matrix(stanfit, par)[, indices]
-                } else {
-                        function(par) {
-                                m <- as.matrix(stanfit, par)
-                                sapply(
-                                        indices,
-                                        function(i) apply(m[, i], 1, sum)
-                                )
-                        }
+                function(par) {
+                        m <- as.matrix(stanfit, par)
+                        sapply(
+                                indices,
+                                function(i) {
+                                        if (vec_size(i) > 1) {
+                                                apply(m[, i], 1, sum)
+                                        } else {
+                                                m[, i]
+                                        }
+                                }
+                        )
                 }
         log_lik <- .collapse("log_lik")
         y <-
