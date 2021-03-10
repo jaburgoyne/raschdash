@@ -34,6 +34,7 @@ data {
   int<lower=-M,upper=N> nn[O];  // person for observation m
                                 //   negative value => group observation
   int<lower=1,upper=L> ll[I];   // testlet for item i
+  vector<lower=0>[I] w;         // weight of item i
   int<lower=1,upper=I> ii[O];   // item for observation o
   int<lower=1> kk[I];           // maximum score for item i
                                 //   Rasch if 1
@@ -45,47 +46,43 @@ data {
 
 parameters {
   // The parameters are mostly in LISREL notation, with some abuse
-  // of κ, δ, ε, and θ for items and testlets.
-  real kappa;                      // intercept
-  vector<offset=mu,[L] epsilon_raw;           // relative difficulty for testlet l
-  vector[I] upsilon_raw;           // relative difficulty for item i
-  real d_tau_raw;                  // spacing of last two thresholds.
-  vector[max(0, K-2)] d_tau_err;   // relative spacing for threshold t.
-                                   //   Vanishes if no rating scales
-                                   //   or less than two thresholds.
-  vector[M] xi_raw;                // ability for group j
-  vector[N] zeta_raw;              // relative ability for person n
-  real<lower=0> theta_epsilon_raw; // scale of testlet difficulties
-  real<lower=0> theta_upsilon;     // scale of relative item difficulties
-  real<lower=0> psi_raw;           // scale of group abilities
-  real<lower=0> phi;               // scale of relative person abilities
+  // of ν, δ, ε, and θ for items and testlets.
+  real nu;                                // intercept
+  vector[L > 1 ? L : 0] epsilon_raw;      // relative difficulty for testlet l
+  vector[I] upsilon_raw;                  // relative difficulty for item i
+  vector[K > 1 ? K : 0] tau_raw;          // relative difficulty of step t
+  vector[M > 1 ? M : 0] xi_raw;           // ability for group j
+  vector[N] zeta_raw;                     // relative ability for person n
+  vector<lower=0>[L > 1 ? 1 : 0] theta_epsilon;
+                                          // scale of testlet difficulties
+  real<lower=0> theta_upsilon;            // scale of relative item difficulties
+  vector<lower=0>[K > 1 ? 1 : 0] theta_tau;
+                                          // scale of step offsets
+  vector<lower=0>[M > 1 ? 1 : 0] psi;     // scale of group abilities
+  real<lower=0> phi;                      // scale of relative person abilities
 }
 
 transformed parameters {
-  vector[L] epsilon;
+  vector[L > 1 ? L : 0] epsilon;
   vector[I] delta;
-  vector[K] tau;
-  vector[M] xi;
+  vector[K > 1 ? K : 0] tau;
+  vector[M > 1 ? M : 0] xi;
   vector[N] eta;
-  real theta_epsilon = L == 1 ? 0 : theta_epsilon_raw;
-  real psi = M == 1 ? 0 : psi_raw;
-  epsilon = nu + theta_epsilon * epsilon_raw;
-  delta = epsilon[ll] + theta_upsilon * upsilon_raw;
-  if (K == 1) {
-    tau = [0]';
-  } else if (K > 1) {
-    // Our prior is that thresholds should be ascending,
-    // but disordered thresholds are possible. Use the
-    // traditional log(2) separation requirement
-    // (Linacre, 2002) as a prior mean.
-    vector[K-1] d_tau =
-      log(2) + d_tau_raw + append_row(d_tau_err, 0);
-    vector[K] tau_raw = cumulative_sum(append_row(0, d_tau));
-    // Centre between the last two thresholds.
-    tau = tau_raw - tau_raw[K] + 0.5 * d_tau_raw;
+  if (L > 1) {
+    epsilon = nu + theta_epsilon[1] * epsilon_raw;
+    delta = epsilon[ll] + theta_upsilon * upsilon_raw;
+  } else {
+    delta = nu + theta_upsilon * upsilon_raw;
   }
-  xi = psi * xi_raw;
-  eta = xi[mm] + phi * zeta_raw;
+  if (K > 1) {
+    tau = theta_tau[1] * tau_raw;
+  }
+  if (M > 1) {
+    xi = psi[1] * xi_raw;
+    eta = xi[mm] + phi * zeta_raw;
+  } else {
+    eta = phi * zeta_raw;
+  }
 }
 
 model {
@@ -94,17 +91,17 @@ model {
   // essentially the same result. The Nuffic distribution
   // is closer to t_10, which allows for some outliers, but it runs
   // slower and fits equivalently to the standard normal.
-  nu                ~ std_normal();
-  epsilon_raw       ~ std_normal();
-  upsilon_raw       ~ std_normal();
-  d_tau_raw         ~ std_normal();
-  d_tau_err         ~ std_normal();
-  xi_raw            ~ std_normal();
-  zeta_raw          ~ std_normal();
-  theta_epsilon_raw ~ std_normal();
-  theta_upsilon     ~ std_normal();
-  psi_raw           ~ std_normal();
-  phi               ~ std_normal();
+  nu            ~ std_normal();
+  epsilon_raw   ~ std_normal();
+  upsilon_raw   ~ std_normal();
+  tau_raw       ~ std_normal();
+  xi_raw        ~ std_normal();
+  zeta_raw      ~ std_normal();
+  theta_epsilon ~ std_normal();
+  theta_upsilon ~ std_normal();
+  theta_tau     ~ std_normal();
+  psi           ~ std_normal();
+  phi           ~ std_normal();
   for (o in 1:O) {
     int i = ii[o];
     int k = kk[i];
@@ -113,9 +110,9 @@ model {
     // When K == 1, using the rsm function is correct but
     // inefficient. Checking for k == 1 first routes these items
     // to the built-in bernoulli_logit().
-    if (k == 1)      y[o] ~ bernoulli_logit(beta);
-    else if (k == K) y[o] ~ rsm(beta - tau);
-    else             y[o] ~ binomial_logit(k, beta);
+    if (k == 1)      target += w[i] * bernoulli_logit_lpmf(y[o] | beta);
+    else if (k == K) target += w[i] * pcm_lpmf(y[o] | beta - tau);
+    else             target += w[i] * binomial_logit_lpmf(y[o] | k, beta);
   }
 }
 
