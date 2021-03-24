@@ -63,18 +63,20 @@
 
 .add_pp_statistics <- function(df, stanfit, use_loo, mark) {
   indices <- purrr::pluck(df, "row")
+  weights <- purrr::pluck(df, "weight")
   .collapse <-
     function(par) {
       m <- as.matrix(stanfit, par)
-      sapply(
-        indices,
-        function(i) {
+      mapply(
+        function(i, w) {
           if (vec_size(i) > 1) {
-            apply(m[, i], 1, sum)
+            apply(sweep(m[, i], 2, w, `*`), 1, sum)
           } else {
-            m[, i]
+            w * m[, i]
           }
-        }
+        },
+        indices,
+        weights
       )
     }
   log_lik <- .collapse("log_lik")
@@ -188,8 +190,9 @@
   dplyr::summarise(
     df %>% .personify() %>% .identify(),
     n = dplyr::n(),
-    dplyr::across(dplyr::ends_with("_score"), sum),
+    dplyr::across(dplyr::ends_with("_score"), ~sum(.x * weight)),
     dplyr::across("row", list),
+    dplyr::across("weight", list),
     ## The stan_ variables are only useful for retrieving
     ## calibrations, in which case they will be unique. Choosing the
     ## first value is a cheap solution to do *something* for the
@@ -231,6 +234,6 @@ summary.rdfit <- function(object, ..., use_loo = NULL,
       mark = mark
     ) %>%
     dplyr::select(
-      !dplyr::any_of("row") & !dplyr::starts_with("stan_")
+      !dplyr::any_of(c("row", "weight")) & !dplyr::starts_with("stan_")
     )
 }

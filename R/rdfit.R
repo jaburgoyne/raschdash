@@ -11,8 +11,8 @@
 #' they are not.
 #'
 #' @param data a data frame with columns for cohort, group, person, testlet,
-#'             item, maximum possible item score, and observed score. For
-#'             group-level observations, the person should be `NA`.
+#'             item, maximum possible item score, observed score, and weight.
+#'             For group-level observations, the person should be `NA`.
 #' @param cohort <[tidyr::tidyr_tidy_select]> cohort column. Defaults to a
 #'               generic *All* cohort.
 #' @param group <[tidyr::tidyr_tidy_select]> group column. Defaults to a
@@ -23,6 +23,7 @@
 #' @param item <[tidyr::tidyr_tidy_select]> item column
 #' @param max_score <[tidyr::tidyr_tidy_select]> maximum-score column
 #' @param obs_score <[tidyr::tidyr_tidy_select]> observed score column
+#' @param weight <[tidyr::tidyr_tidy_select]> weight column
 #' @param k maximum score of rating-scale items. Defaults to no rating scales.
 #' @param cohorts vector of unique cohort identifiers
 #' @param groups vector of unique group identifiers
@@ -38,10 +39,14 @@
 #'            for the group-level observations, vectors of the corresponding
 #'            cohorts (`obs_group_cohorts`), groups (`obs_groups`), items
 #'            (`obs_group_items`), and observed scores (`obs_group_scores`)
+#' @param group_obs_weights vector of non-negative regression weights per
+#'            group-level observation
 #' @param obs_person_cohorts,obs_persons,obs_person_items,obs_person_scores
 #'            for the person-level observations, vectors of the corresponding
 #'            cohorts (`obs_person_cohorts`), persons (`obs_persons`), items
 #'            (`obs_person_items`), and observed scores (`obs_person_scores`)
+#' @param person_obs_weights vector of non-negative regression weights per
+#'            person-level observation
 #' @param pars which parameters to save from the Stan model. Defaults to
 #'             `standard`, which only saves parameters on the standard scale,
 #'             but may also be `logit` to add logit-scale parameters,
@@ -76,6 +81,14 @@
 #'   * log likelihoods
 #'       * `log_lik`: log likelihood of observed scores
 #'       * `log_lik_rep`: log likelihood of predicted scores
+#'       * `log_lik_prior_person`: log likelihood of predicted scores under the
+#'                                 prior distribution of person and group
+#'                                 parameters (sampled under posterior hyper-
+#'                                 parameters)
+#'       * `log_lik_prior_item`: log likelihood of predicted scores under the
+#'                               prior distribution of item and testlet
+#'                               parameters (sampled under posterior hyper-
+#'                               parameters)
 #'   * logit-scale parameters (when `pars = "logit"` or `pars = "hyper"`)
 #'       * `xi`: group abilities
 #'       * `eta`: person abilities
@@ -88,8 +101,7 @@
 #'       * `psi`: scale of group abilities
 #'       * `phi`: scale of person abilities (relative to group)
 #'       * `theta_epsilon`: scale of testlet difficulties
-#'       * `theta_upsilon`: scale of item difficulties (relative to testlet)
-#'       * `theta`: scale of item difficulties (overall)
+#'       * `theta_upsilon`: scale of item/threshold difficulties (relative to testlet)
 #'  }
 #'
 #'  \item{`loo`}{
@@ -106,6 +118,7 @@ rdfit <- function(data,
                   group = "All", person,
                   testlet = "All", item, max_score,
                   obs_score,
+                  weight,
                   k = 1,
                   ...) {
   obs <-
@@ -134,18 +147,27 @@ rdfit <- function(data,
           x = {{ obs_score }},
           to = integer(),
           x_arg = "obs_score"
+        ),
+      weight =
+        vec_cast(
+          x = {{ weight }},
+          to = numeric(),
+          x_arg = "weight"
         )
     ) %>%
     ## Rasch models have no problem with missing observations, but
     ## Stan does not want to see them.
     dplyr::filter(!vec_equal_na(obs_score))
-  ## Stan will complain about invalid scores, but the messages will be
-  ## opaque for R users.
+  ## Stan will complain about invalid scores and weights, but the messages will
+  ## be opaque for R users.
   if (any(obs$max_score < 1)) {
     abort("Some maximum scores are non-positive.")
   }
   if (any(obs$obs_score > obs$max_score)) {
     abort("Some observed scores are greater than their maxima.")
+  }
+  if (any(obs$weight < 0)) {
+    abort("Some weights are negative.")
   }
   ## Check for NAs and duplicates when preparing data for Stan. Stan's
   ## validation will catch these, but not with helpful messages.
@@ -205,10 +227,12 @@ rdfit <- function(data,
     obs_groups = group_obs$group,
     obs_group_items = group_obs$item,
     obs_group_scores = group_obs$obs_score,
+    group_obs_weights = group_obs$weight,
     obs_person_cohorts = person_obs$cohort,
     obs_persons = person_obs$person,
     obs_person_items = person_obs$item,
     obs_person_scores = person_obs$obs_score,
+    person_obs_weights = person_obs$weight,
     k = k,
     ...
   )
@@ -220,9 +244,9 @@ new_rdfit <- function(cohorts,
                       groups, persons, person_groups,
                       testlets, items, item_testlets, item_max_scores,
                       obs_group_cohorts, obs_groups, obs_group_items,
-                      obs_group_scores,
+                      obs_group_scores, group_obs_weights,
                       obs_person_cohorts, obs_persons, obs_person_items,
-                      obs_person_scores,
+                      obs_person_scores, person_obs_weights,
                       k = 1,
                       pars = c("standard", "logit", "hyper", "all"),
                       ...) {
@@ -234,13 +258,11 @@ new_rdfit <- function(cohorts,
       "thresholds",
       "y_rep",
       "log_lik", "log_lik_rep",
-      "prior_group_ability",
-      "prior_person_ability",
-      "prior_testlet_difficulty",
-      "prior_item_difficulty"
+      "log_lik_prior_person", "log_lik_prior_item"
     )
   LOGIT_PARS <- c("xi", "eta", "epsilon", "delta", "tau")
-  HYPER_PARS <- c("psi", "phi", "theta_epsilon", "theta_upsilon", "theta")
+  HYPER_PARS <-
+    c("psi", "phi", "theta_epsilon", "theta_upsilon", "theta_tau")
   pars <- match.arg(pars)
   stan_pars <-
     switch(pars,
@@ -249,6 +271,18 @@ new_rdfit <- function(cohorts,
       "standard" = c(STANDARD_PARS),
       NA
     )
+  if (length(testlets) == 1) {
+    stan_pars <-
+      setdiff(stan_pars, c("testlet_difficulty", "epsilon", "theta_epsilon"))
+  }
+  if (k == 1) {
+    stan_pars <-
+      setdiff(stan_pars, c("thresholds", "tau", "theta_tau"))
+  }
+  if (length(groups) == 1) {
+    stan_pars <-
+      setdiff(stan_pars, c("group_ability", "xi", "psi"))
+  }
   ## Make tidy tibbles and sort for reliable indexing inside Stan.
   groups <-
     dplyr::tibble(
@@ -289,6 +323,7 @@ new_rdfit <- function(cohorts,
       group = obs_groups,
       item = obs_group_items,
       observed_score = obs_group_scores,
+      weight = group_obs_weights
     ) %>%
     dplyr::inner_join(
       dplyr::mutate(
@@ -308,6 +343,7 @@ new_rdfit <- function(cohorts,
       person = obs_persons,
       item = obs_person_items,
       observed_score = obs_person_scores,
+      weight = person_obs_weights
     ) %>%
     dplyr::inner_join(persons, by = "person") %>%
     dplyr::inner_join(items, by = "item")
@@ -319,7 +355,8 @@ new_rdfit <- function(cohorts,
       .data$stan_person, .data$person,
       .data$stan_testlet, .data$testlet,
       .data$stan_item, .data$item,
-      .data$max_score, .data$observed_score
+      .data$max_score, .data$observed_score,
+      .data$weight
     )
   ## Fit the model.
   stanfit <-
@@ -338,7 +375,8 @@ new_rdfit <- function(cohorts,
           ll = items$stan_testlet,
           ii = observations$stan_item,
           kk = items$max_score,
-          y = observations$observed_score
+          y = observations$observed_score,
+          w = observations$weight
         ),
       # Extra iterations would be necessary for reliable
       # 95% intervals (10K n_eff for η and δ).
