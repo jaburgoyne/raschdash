@@ -33,7 +33,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_raschdash");
-    reader.add_event(206, 204, "end", "model_raschdash");
+    reader.add_event(180, 178, "end", "model_raschdash");
     return reader;
 }
 template <bool propto, typename T1__>
@@ -865,12 +865,11 @@ public:
         names__.push_back("thresholds");
         names__.push_back("group_ability");
         names__.push_back("person_ability");
-        names__.push_back("y_prior_group");
-        names__.push_back("y_prior_person");
-        names__.push_back("y_prior_group_item");
-        names__.push_back("y_prior_item");
         names__.push_back("y_rep");
         names__.push_back("log_lik");
+        names__.push_back("log_lik_rep");
+        names__.push_back("log_lik_prior_person");
+        names__.push_back("log_lik_prior_item");
     }
     void get_dims(std::vector<std::vector<size_t> >& dimss__) const {
         dimss__.resize(0);
@@ -940,18 +939,13 @@ public:
         dims__.push_back(N);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(I);
+        dims__.push_back(O);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(I);
+        dims__.push_back(O);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(max_item_score);
-        dims__.push_back(M);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dims__.push_back(max_item_score);
-        dims__.push_back(N);
+        dims__.push_back(O);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(O);
@@ -1156,32 +1150,29 @@ public:
             stan::math::fill(person_ability, DUMMY_VAR__);
             stan::math::assign(person_ability,divide(eta, sigma));
             current_statement_begin__ = 133;
-            validate_non_negative_index("y_prior_group", "I", I);
-            std::vector<int> y_prior_group(I, int(0));
-            stan::math::fill(y_prior_group, std::numeric_limits<int>::min());
-            current_statement_begin__ = 134;
-            validate_non_negative_index("y_prior_person", "I", I);
-            std::vector<int> y_prior_person(I, int(0));
-            stan::math::fill(y_prior_person, std::numeric_limits<int>::min());
-            current_statement_begin__ = 135;
-            validate_non_negative_index("y_prior_group_item", "max_item_score", max_item_score);
-            validate_non_negative_index("y_prior_group_item", "M", M);
-            std::vector<std::vector<int> > y_prior_group_item(max_item_score, std::vector<int>(M, int(0)));
-            stan::math::fill(y_prior_group_item, std::numeric_limits<int>::min());
-            current_statement_begin__ = 136;
-            validate_non_negative_index("y_prior_item", "max_item_score", max_item_score);
-            validate_non_negative_index("y_prior_item", "N", N);
-            std::vector<std::vector<int> > y_prior_item(max_item_score, std::vector<int>(N, int(0)));
-            stan::math::fill(y_prior_item, std::numeric_limits<int>::min());
-            current_statement_begin__ = 137;
             validate_non_negative_index("y_rep", "O", O);
             std::vector<int> y_rep(O, int(0));
             stan::math::fill(y_rep, std::numeric_limits<int>::min());
-            current_statement_begin__ = 138;
+            current_statement_begin__ = 134;
             validate_non_negative_index("log_lik", "O", O);
             Eigen::Matrix<double, Eigen::Dynamic, 1> log_lik(O);
             stan::math::initialize(log_lik, DUMMY_VAR__);
             stan::math::fill(log_lik, DUMMY_VAR__);
+            current_statement_begin__ = 135;
+            validate_non_negative_index("log_lik_rep", "O", O);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> log_lik_rep(O);
+            stan::math::initialize(log_lik_rep, DUMMY_VAR__);
+            stan::math::fill(log_lik_rep, DUMMY_VAR__);
+            current_statement_begin__ = 136;
+            validate_non_negative_index("log_lik_prior_person", "O", O);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> log_lik_prior_person(O);
+            stan::math::initialize(log_lik_prior_person, DUMMY_VAR__);
+            stan::math::fill(log_lik_prior_person, DUMMY_VAR__);
+            current_statement_begin__ = 137;
+            validate_non_negative_index("log_lik_prior_item", "O", O);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> log_lik_prior_item(O);
+            stan::math::initialize(log_lik_prior_item, DUMMY_VAR__);
+            stan::math::fill(log_lik_prior_item, DUMMY_VAR__);
             // generated quantities statements
             {
             current_statement_begin__ = 140;
@@ -1197,224 +1188,157 @@ public:
             stan::math::fill(prior_eta, DUMMY_VAR__);
             stan::math::assign(prior_eta,normal_rng(prior_xi, phi, base_rng__));
             current_statement_begin__ = 142;
-            for (int i = 1; i <= I; ++i) {
-                {
-                current_statement_begin__ = 143;
-                int k(0);
-                (void) k;  // dummy to suppress unused var warning
-                stan::math::fill(k, std::numeric_limits<int>::min());
-                stan::math::assign(k,get_base1(kk, i, "kk", 1));
-                current_statement_begin__ = 144;
-                local_scalar_t__ beta_prior_group(DUMMY_VAR__);
-                (void) beta_prior_group;  // dummy to suppress unused var warning
-                stan::math::initialize(beta_prior_group, DUMMY_VAR__);
-                stan::math::fill(beta_prior_group, DUMMY_VAR__);
-                stan::math::assign(beta_prior_group,(prior_xi - get_base1(delta, i, "delta", 1)));
-                current_statement_begin__ = 145;
-                local_scalar_t__ beta_prior_person(DUMMY_VAR__);
-                (void) beta_prior_person;  // dummy to suppress unused var warning
-                stan::math::initialize(beta_prior_person, DUMMY_VAR__);
-                stan::math::fill(beta_prior_person, DUMMY_VAR__);
-                stan::math::assign(beta_prior_person,(prior_eta - get_base1(delta, i, "delta", 1)));
-                current_statement_begin__ = 146;
-                if (as_bool(logical_eq(k, 1))) {
-                    current_statement_begin__ = 147;
-                    stan::model::assign(y_prior_group, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
-                                bernoulli_logit_rng(beta_prior_group, base_rng__), 
-                                "assigning variable y_prior_group");
-                    current_statement_begin__ = 148;
-                    stan::model::assign(y_prior_person, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
-                                bernoulli_logit_rng(beta_prior_person, base_rng__), 
-                                "assigning variable y_prior_person");
-                } else if (as_bool(logical_eq(k, K))) {
-                    current_statement_begin__ = 150;
-                    stan::model::assign(y_prior_group, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
-                                pcm_rng(subtract(beta_prior_group, tau), base_rng__, pstream__), 
-                                "assigning variable y_prior_group");
-                    current_statement_begin__ = 151;
-                    stan::model::assign(y_prior_person, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
-                                pcm_rng(subtract(beta_prior_person, tau), base_rng__, pstream__), 
-                                "assigning variable y_prior_person");
-                } else {
-                    current_statement_begin__ = 153;
-                    stan::model::assign(y_prior_group, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
-                                binomial_rng(k, inv_logit(beta_prior_group), base_rng__), 
-                                "assigning variable y_prior_group");
-                    current_statement_begin__ = 154;
-                    stan::model::assign(y_prior_person, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
-                                binomial_rng(k, inv_logit(beta_prior_person), base_rng__), 
-                                "assigning variable y_prior_person");
-                }
-                }
-            }
-            }
-            {
-            current_statement_begin__ = 159;
             local_scalar_t__ prior_epsilon(DUMMY_VAR__);
             (void) prior_epsilon;  // dummy to suppress unused var warning
             stan::math::initialize(prior_epsilon, DUMMY_VAR__);
             stan::math::fill(prior_epsilon, DUMMY_VAR__);
             stan::math::assign(prior_epsilon,(logical_gt(L, 1) ? stan::math::promote_scalar<local_scalar_t__>(normal_rng(nu, get_base1(theta_epsilon, 1, "theta_epsilon", 1), base_rng__)) : stan::math::promote_scalar<local_scalar_t__>(nu) ));
-            current_statement_begin__ = 160;
+            current_statement_begin__ = 143;
             local_scalar_t__ prior_delta_raw(DUMMY_VAR__);
             (void) prior_delta_raw;  // dummy to suppress unused var warning
             stan::math::initialize(prior_delta_raw, DUMMY_VAR__);
             stan::math::fill(prior_delta_raw, DUMMY_VAR__);
             stan::math::assign(prior_delta_raw,normal_rng(prior_epsilon, theta_upsilon_raw, base_rng__));
-            current_statement_begin__ = 161;
+            current_statement_begin__ = 144;
             local_scalar_t__ prior_delta(DUMMY_VAR__);
             (void) prior_delta;  // dummy to suppress unused var warning
             stan::math::initialize(prior_delta, DUMMY_VAR__);
             stan::math::fill(prior_delta, DUMMY_VAR__);
             stan::math::assign(prior_delta,normal_rng(prior_epsilon, theta_upsilon, base_rng__));
-            current_statement_begin__ = 162;
+            current_statement_begin__ = 145;
             validate_non_negative_index("prior_tau", "K", K);
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> prior_tau(K);
             stan::math::initialize(prior_tau, DUMMY_VAR__);
             stan::math::fill(prior_tau, DUMMY_VAR__);
-            current_statement_begin__ = 163;
+            current_statement_begin__ = 146;
             if (as_bool(logical_gt(K, 1))) {
-                current_statement_begin__ = 163;
+                current_statement_begin__ = 146;
                 for (int k = 1; k <= K; ++k) {
-                    current_statement_begin__ = 163;
+                    current_statement_begin__ = 146;
                     stan::model::assign(prior_tau, 
                                 stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()), 
                                 normal_rng(0, get_base1(theta_tau, 1, "theta_tau", 1), base_rng__), 
                                 "assigning variable prior_tau");
                 }
             }
-            current_statement_begin__ = 164;
-            for (int k = 1; k <= max_item_score; ++k) {
-                current_statement_begin__ = 165;
-                for (int m = 1; m <= M; ++m) {
-                    {
-                    current_statement_begin__ = 166;
-                    local_scalar_t__ beta_prior_group_item(DUMMY_VAR__);
-                    (void) beta_prior_group_item;  // dummy to suppress unused var warning
-                    stan::math::initialize(beta_prior_group_item, DUMMY_VAR__);
-                    stan::math::fill(beta_prior_group_item, DUMMY_VAR__);
-                    stan::math::assign(beta_prior_group_item,((logical_gt(M, 1) ? stan::math::promote_scalar<local_scalar_t__>(get_base1(xi, m, "xi", 1)) : stan::math::promote_scalar<local_scalar_t__>(0) ) - prior_delta));
-                    current_statement_begin__ = 167;
-                    if (as_bool(logical_eq(k, 1))) {
-                        current_statement_begin__ = 168;
-                        stan::model::assign(y_prior_group_item, 
-                                    stan::model::cons_list(stan::model::index_uni(k), stan::model::cons_list(stan::model::index_uni(m), stan::model::nil_index_list())), 
-                                    bernoulli_logit_rng(beta_prior_group_item, base_rng__), 
-                                    "assigning variable y_prior_group_item");
-                    } else if (as_bool(logical_eq(k, K))) {
-                        current_statement_begin__ = 170;
-                        stan::model::assign(y_prior_group_item, 
-                                    stan::model::cons_list(stan::model::index_uni(k), stan::model::cons_list(stan::model::index_uni(m), stan::model::nil_index_list())), 
-                                    pcm_rng(subtract(beta_prior_group_item, prior_tau), base_rng__, pstream__), 
-                                    "assigning variable y_prior_group_item");
-                    } else {
-                        current_statement_begin__ = 172;
-                        stan::model::assign(y_prior_group_item, 
-                                    stan::model::cons_list(stan::model::index_uni(k), stan::model::cons_list(stan::model::index_uni(m), stan::model::nil_index_list())), 
-                                    binomial_rng(k, inv_logit(beta_prior_group_item), base_rng__), 
-                                    "assigning variable y_prior_group_item");
-                    }
-                    }
-                }
-                current_statement_begin__ = 176;
-                for (int n = 1; n <= N; ++n) {
-                    {
-                    current_statement_begin__ = 177;
-                    local_scalar_t__ beta_prior_item(DUMMY_VAR__);
-                    (void) beta_prior_item;  // dummy to suppress unused var warning
-                    stan::math::initialize(beta_prior_item, DUMMY_VAR__);
-                    stan::math::fill(beta_prior_item, DUMMY_VAR__);
-                    stan::math::assign(beta_prior_item,(get_base1(eta, n, "eta", 1) - prior_delta));
-                    current_statement_begin__ = 178;
-                    if (as_bool(logical_eq(k, 1))) {
-                        current_statement_begin__ = 179;
-                        stan::model::assign(y_prior_item, 
-                                    stan::model::cons_list(stan::model::index_uni(k), stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list())), 
-                                    bernoulli_logit_rng(beta_prior_item, base_rng__), 
-                                    "assigning variable y_prior_item");
-                    } else if (as_bool(logical_eq(k, K))) {
-                        current_statement_begin__ = 181;
-                        stan::model::assign(y_prior_item, 
-                                    stan::model::cons_list(stan::model::index_uni(k), stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list())), 
-                                    pcm_rng(subtract(beta_prior_item, prior_tau), base_rng__, pstream__), 
-                                    "assigning variable y_prior_item");
-                    } else {
-                        current_statement_begin__ = 183;
-                        stan::model::assign(y_prior_item, 
-                                    stan::model::cons_list(stan::model::index_uni(k), stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list())), 
-                                    binomial_rng(k, inv_logit(beta_prior_item), base_rng__), 
-                                    "assigning variable y_prior_item");
-                    }
-                    }
-                }
-            }
-            }
-            current_statement_begin__ = 188;
+            current_statement_begin__ = 147;
             for (int o = 1; o <= O; ++o) {
                 {
-                current_statement_begin__ = 189;
+                current_statement_begin__ = 148;
                 int i(0);
                 (void) i;  // dummy to suppress unused var warning
                 stan::math::fill(i, std::numeric_limits<int>::min());
                 stan::math::assign(i,get_base1(ii, o, "ii", 1));
-                current_statement_begin__ = 190;
+                current_statement_begin__ = 149;
                 int k(0);
                 (void) k;  // dummy to suppress unused var warning
                 stan::math::fill(k, std::numeric_limits<int>::min());
                 stan::math::assign(k,get_base1(kk, i, "kk", 1));
-                current_statement_begin__ = 191;
+                current_statement_begin__ = 150;
                 int n(0);
                 (void) n;  // dummy to suppress unused var warning
                 stan::math::fill(n, std::numeric_limits<int>::min());
                 stan::math::assign(n,get_base1(nn, o, "nn", 1));
-                current_statement_begin__ = 192;
+                current_statement_begin__ = 151;
                 local_scalar_t__ beta(DUMMY_VAR__);
                 (void) beta;  // dummy to suppress unused var warning
                 stan::math::initialize(beta, DUMMY_VAR__);
                 stan::math::fill(beta, DUMMY_VAR__);
                 stan::math::assign(beta,((logical_lt(n, 0) ? stan::math::promote_scalar<local_scalar_t__>(get_base1(xi, -(n), "xi", 1)) : stan::math::promote_scalar<local_scalar_t__>(get_base1(eta, n, "eta", 1)) ) - get_base1(delta, i, "delta", 1)));
-                current_statement_begin__ = 193;
+                current_statement_begin__ = 152;
+                local_scalar_t__ beta_prior_person(DUMMY_VAR__);
+                (void) beta_prior_person;  // dummy to suppress unused var warning
+                stan::math::initialize(beta_prior_person, DUMMY_VAR__);
+                stan::math::fill(beta_prior_person, DUMMY_VAR__);
+                stan::math::assign(beta_prior_person,((logical_lt(n, 0) ? prior_xi : prior_eta ) - get_base1(delta, i, "delta", 1)));
+                current_statement_begin__ = 153;
+                local_scalar_t__ beta_prior_item(DUMMY_VAR__);
+                (void) beta_prior_item;  // dummy to suppress unused var warning
+                stan::math::initialize(beta_prior_item, DUMMY_VAR__);
+                stan::math::fill(beta_prior_item, DUMMY_VAR__);
+                stan::math::assign(beta_prior_item,((logical_lt(n, 0) ? stan::math::promote_scalar<local_scalar_t__>(get_base1(xi, -(n), "xi", 1)) : stan::math::promote_scalar<local_scalar_t__>(get_base1(eta, n, "eta", 1)) ) - (logical_eq(k, K) ? prior_delta_raw : prior_delta )));
+                current_statement_begin__ = 155;
                 if (as_bool(logical_eq(k, 1))) {
-                    current_statement_begin__ = 194;
+                    current_statement_begin__ = 156;
                     stan::model::assign(y_rep, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 bernoulli_logit_rng(beta, base_rng__), 
                                 "assigning variable y_rep");
-                    current_statement_begin__ = 195;
+                    current_statement_begin__ = 157;
                     stan::model::assign(log_lik, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 bernoulli_logit_log(get_base1(y, o, "y", 1), beta), 
                                 "assigning variable log_lik");
+                    current_statement_begin__ = 158;
+                    stan::model::assign(log_lik_rep, 
+                                stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
+                                bernoulli_logit_log(get_base1(y_rep, o, "y_rep", 1), beta), 
+                                "assigning variable log_lik_rep");
+                    current_statement_begin__ = 159;
+                    stan::model::assign(log_lik_prior_person, 
+                                stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
+                                bernoulli_logit_log(get_base1(y, o, "y", 1), beta_prior_person), 
+                                "assigning variable log_lik_prior_person");
+                    current_statement_begin__ = 161;
+                    stan::model::assign(log_lik_prior_item, 
+                                stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
+                                bernoulli_logit_log(get_base1(y, o, "y", 1), beta_prior_item), 
+                                "assigning variable log_lik_prior_item");
                 } else if (as_bool(logical_eq(k, K))) {
-                    current_statement_begin__ = 197;
+                    current_statement_begin__ = 163;
                     stan::model::assign(y_rep, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 pcm_rng(subtract(beta, tau), base_rng__, pstream__), 
                                 "assigning variable y_rep");
-                    current_statement_begin__ = 198;
+                    current_statement_begin__ = 164;
                     stan::model::assign(log_lik, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 pcm_lpmf(get_base1(y, o, "y", 1), subtract(beta, tau), pstream__), 
                                 "assigning variable log_lik");
+                    current_statement_begin__ = 165;
+                    stan::model::assign(log_lik_rep, 
+                                stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
+                                pcm_lpmf(get_base1(y_rep, o, "y_rep", 1), subtract(beta, tau), pstream__), 
+                                "assigning variable log_lik_rep");
+                    current_statement_begin__ = 166;
+                    stan::model::assign(log_lik_prior_person, 
+                                stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
+                                pcm_lpmf(get_base1(y, o, "y", 1), subtract(beta_prior_person, tau), pstream__), 
+                                "assigning variable log_lik_prior_person");
+                    current_statement_begin__ = 167;
+                    stan::model::assign(log_lik_prior_item, 
+                                stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
+                                pcm_lpmf(get_base1(y, o, "y", 1), subtract(beta_prior_item, prior_tau), pstream__), 
+                                "assigning variable log_lik_prior_item");
                 } else {
-                    current_statement_begin__ = 200;
+                    current_statement_begin__ = 169;
                     stan::model::assign(y_rep, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 binomial_rng(k, inv_logit(beta), base_rng__), 
                                 "assigning variable y_rep");
-                    current_statement_begin__ = 201;
+                    current_statement_begin__ = 170;
                     stan::model::assign(log_lik, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
                                 binomial_logit_log(get_base1(y, o, "y", 1), k, beta), 
                                 "assigning variable log_lik");
+                    current_statement_begin__ = 171;
+                    stan::model::assign(log_lik_rep, 
+                                stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
+                                binomial_logit_log(get_base1(y_rep, o, "y_rep", 1), k, beta), 
+                                "assigning variable log_lik_rep");
+                    current_statement_begin__ = 172;
+                    stan::model::assign(log_lik_prior_person, 
+                                stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
+                                binomial_logit_log(get_base1(y, o, "y", 1), k, beta_prior_person), 
+                                "assigning variable log_lik_prior_person");
+                    current_statement_begin__ = 174;
+                    stan::model::assign(log_lik_prior_item, 
+                                stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
+                                binomial_logit_log(get_base1(y, o, "y", 1), k, beta_prior_item), 
+                                "assigning variable log_lik_prior_item");
                 }
                 }
+            }
             }
             // validate, write generated quantities
             current_statement_begin__ = 126;
@@ -1446,54 +1370,6 @@ public:
                 vars__.push_back(person_ability(j_1__));
             }
             current_statement_begin__ = 133;
-            size_t y_prior_group_i_0_max__ = I;
-            for (size_t i_0__ = 0; i_0__ < y_prior_group_i_0_max__; ++i_0__) {
-                check_greater_or_equal(function__, "y_prior_group[i_0__]", y_prior_group[i_0__], 0);
-            }
-            size_t y_prior_group_k_0_max__ = I;
-            for (size_t k_0__ = 0; k_0__ < y_prior_group_k_0_max__; ++k_0__) {
-                vars__.push_back(y_prior_group[k_0__]);
-            }
-            current_statement_begin__ = 134;
-            size_t y_prior_person_i_0_max__ = I;
-            for (size_t i_0__ = 0; i_0__ < y_prior_person_i_0_max__; ++i_0__) {
-                check_greater_or_equal(function__, "y_prior_person[i_0__]", y_prior_person[i_0__], 0);
-            }
-            size_t y_prior_person_k_0_max__ = I;
-            for (size_t k_0__ = 0; k_0__ < y_prior_person_k_0_max__; ++k_0__) {
-                vars__.push_back(y_prior_person[k_0__]);
-            }
-            current_statement_begin__ = 135;
-            size_t y_prior_group_item_i_0_max__ = max_item_score;
-            size_t y_prior_group_item_i_1_max__ = M;
-            for (size_t i_0__ = 0; i_0__ < y_prior_group_item_i_0_max__; ++i_0__) {
-                for (size_t i_1__ = 0; i_1__ < y_prior_group_item_i_1_max__; ++i_1__) {
-                    check_greater_or_equal(function__, "y_prior_group_item[i_0__][i_1__]", y_prior_group_item[i_0__][i_1__], 0);
-                }
-            }
-            size_t y_prior_group_item_k_0_max__ = max_item_score;
-            size_t y_prior_group_item_k_1_max__ = M;
-            for (size_t k_1__ = 0; k_1__ < y_prior_group_item_k_1_max__; ++k_1__) {
-                for (size_t k_0__ = 0; k_0__ < y_prior_group_item_k_0_max__; ++k_0__) {
-                    vars__.push_back(y_prior_group_item[k_0__][k_1__]);
-                }
-            }
-            current_statement_begin__ = 136;
-            size_t y_prior_item_i_0_max__ = max_item_score;
-            size_t y_prior_item_i_1_max__ = N;
-            for (size_t i_0__ = 0; i_0__ < y_prior_item_i_0_max__; ++i_0__) {
-                for (size_t i_1__ = 0; i_1__ < y_prior_item_i_1_max__; ++i_1__) {
-                    check_greater_or_equal(function__, "y_prior_item[i_0__][i_1__]", y_prior_item[i_0__][i_1__], 0);
-                }
-            }
-            size_t y_prior_item_k_0_max__ = max_item_score;
-            size_t y_prior_item_k_1_max__ = N;
-            for (size_t k_1__ = 0; k_1__ < y_prior_item_k_1_max__; ++k_1__) {
-                for (size_t k_0__ = 0; k_0__ < y_prior_item_k_0_max__; ++k_0__) {
-                    vars__.push_back(y_prior_item[k_0__][k_1__]);
-                }
-            }
-            current_statement_begin__ = 137;
             size_t y_rep_i_0_max__ = O;
             for (size_t i_0__ = 0; i_0__ < y_rep_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "y_rep[i_0__]", y_rep[i_0__], 0);
@@ -1502,10 +1378,25 @@ public:
             for (size_t k_0__ = 0; k_0__ < y_rep_k_0_max__; ++k_0__) {
                 vars__.push_back(y_rep[k_0__]);
             }
-            current_statement_begin__ = 138;
+            current_statement_begin__ = 134;
             size_t log_lik_j_1_max__ = O;
             for (size_t j_1__ = 0; j_1__ < log_lik_j_1_max__; ++j_1__) {
                 vars__.push_back(log_lik(j_1__));
+            }
+            current_statement_begin__ = 135;
+            size_t log_lik_rep_j_1_max__ = O;
+            for (size_t j_1__ = 0; j_1__ < log_lik_rep_j_1_max__; ++j_1__) {
+                vars__.push_back(log_lik_rep(j_1__));
+            }
+            current_statement_begin__ = 136;
+            size_t log_lik_prior_person_j_1_max__ = O;
+            for (size_t j_1__ = 0; j_1__ < log_lik_prior_person_j_1_max__; ++j_1__) {
+                vars__.push_back(log_lik_prior_person(j_1__));
+            }
+            current_statement_begin__ = 137;
+            size_t log_lik_prior_item_j_1_max__ = O;
+            for (size_t j_1__ = 0; j_1__ < log_lik_prior_item_j_1_max__; ++j_1__) {
+                vars__.push_back(log_lik_prior_item(j_1__));
             }
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -1664,36 +1555,6 @@ public:
             param_name_stream__ << "person_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t y_prior_group_k_0_max__ = I;
-        for (size_t k_0__ = 0; k_0__ < y_prior_group_k_0_max__; ++k_0__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "y_prior_group" << '.' << k_0__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
-        size_t y_prior_person_k_0_max__ = I;
-        for (size_t k_0__ = 0; k_0__ < y_prior_person_k_0_max__; ++k_0__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "y_prior_person" << '.' << k_0__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
-        size_t y_prior_group_item_k_0_max__ = max_item_score;
-        size_t y_prior_group_item_k_1_max__ = M;
-        for (size_t k_1__ = 0; k_1__ < y_prior_group_item_k_1_max__; ++k_1__) {
-            for (size_t k_0__ = 0; k_0__ < y_prior_group_item_k_0_max__; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "y_prior_group_item" << '.' << k_0__ + 1 << '.' << k_1__ + 1;
-                param_names__.push_back(param_name_stream__.str());
-            }
-        }
-        size_t y_prior_item_k_0_max__ = max_item_score;
-        size_t y_prior_item_k_1_max__ = N;
-        for (size_t k_1__ = 0; k_1__ < y_prior_item_k_1_max__; ++k_1__) {
-            for (size_t k_0__ = 0; k_0__ < y_prior_item_k_0_max__; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "y_prior_item" << '.' << k_0__ + 1 << '.' << k_1__ + 1;
-                param_names__.push_back(param_name_stream__.str());
-            }
-        }
         size_t y_rep_k_0_max__ = O;
         for (size_t k_0__ = 0; k_0__ < y_rep_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
@@ -1704,6 +1565,24 @@ public:
         for (size_t j_1__ = 0; j_1__ < log_lik_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "log_lik" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t log_lik_rep_j_1_max__ = O;
+        for (size_t j_1__ = 0; j_1__ < log_lik_rep_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "log_lik_rep" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t log_lik_prior_person_j_1_max__ = O;
+        for (size_t j_1__ = 0; j_1__ < log_lik_prior_person_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "log_lik_prior_person" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t log_lik_prior_item_j_1_max__ = O;
+        for (size_t j_1__ = 0; j_1__ < log_lik_prior_item_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "log_lik_prior_item" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
     }
@@ -1838,36 +1717,6 @@ public:
             param_name_stream__ << "person_ability" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t y_prior_group_k_0_max__ = I;
-        for (size_t k_0__ = 0; k_0__ < y_prior_group_k_0_max__; ++k_0__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "y_prior_group" << '.' << k_0__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
-        size_t y_prior_person_k_0_max__ = I;
-        for (size_t k_0__ = 0; k_0__ < y_prior_person_k_0_max__; ++k_0__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "y_prior_person" << '.' << k_0__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
-        size_t y_prior_group_item_k_0_max__ = max_item_score;
-        size_t y_prior_group_item_k_1_max__ = M;
-        for (size_t k_1__ = 0; k_1__ < y_prior_group_item_k_1_max__; ++k_1__) {
-            for (size_t k_0__ = 0; k_0__ < y_prior_group_item_k_0_max__; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "y_prior_group_item" << '.' << k_0__ + 1 << '.' << k_1__ + 1;
-                param_names__.push_back(param_name_stream__.str());
-            }
-        }
-        size_t y_prior_item_k_0_max__ = max_item_score;
-        size_t y_prior_item_k_1_max__ = N;
-        for (size_t k_1__ = 0; k_1__ < y_prior_item_k_1_max__; ++k_1__) {
-            for (size_t k_0__ = 0; k_0__ < y_prior_item_k_0_max__; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "y_prior_item" << '.' << k_0__ + 1 << '.' << k_1__ + 1;
-                param_names__.push_back(param_name_stream__.str());
-            }
-        }
         size_t y_rep_k_0_max__ = O;
         for (size_t k_0__ = 0; k_0__ < y_rep_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
@@ -1878,6 +1727,24 @@ public:
         for (size_t j_1__ = 0; j_1__ < log_lik_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "log_lik" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t log_lik_rep_j_1_max__ = O;
+        for (size_t j_1__ = 0; j_1__ < log_lik_rep_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "log_lik_rep" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t log_lik_prior_person_j_1_max__ = O;
+        for (size_t j_1__ = 0; j_1__ < log_lik_prior_person_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "log_lik_prior_person" << '.' << j_1__ + 1;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        size_t log_lik_prior_item_j_1_max__ = O;
+        for (size_t j_1__ = 0; j_1__ < log_lik_prior_item_j_1_max__; ++j_1__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "log_lik_prior_item" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
     }

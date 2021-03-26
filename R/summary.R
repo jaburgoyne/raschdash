@@ -6,59 +6,6 @@
 
 # Internal data manipulation  --------------------------------------------------
 
-.add_entropies <- function(df, stanfit) {
-  .row_entropies <- function(m) {
-    apply(
-      m,
-      2,
-      function(v)
-        entropy::entropy(
-          table(v),
-          unit = "log2",
-          verbose = FALSE
-        )
-    )
-  }
-  max_max_score <- max(df$max_score)
-  n_groups <- abs(min(df$stan_person))
-  n_persons <- max(df$stan_person)
-  ## TODO: Can these be integrated into LOO somehow?
-  posterior_entropy <- .row_entropies(as.matrix(stanfit, "y_rep"))
-  prior_group_entropy <-
-    .row_entropies(as.matrix(stanfit, "y_prior_group"))
-  prior_person_entropy <-
-    .row_entropies(as.matrix(stanfit, "y_prior_person"))
-  prior_group_item_entropy <-
-    .row_entropies(as.matrix(stanfit, "y_prior_group_item")) %>%
-    matrix(max_max_score, n_groups)
-  prior_item_entropy <-
-    .row_entropies(as.matrix(stanfit, "y_prior_item")) %>%
-    matrix(max_max_score, n_persons)
-  df  %>%
-    mutate(
-      entropy = posterior_entropy,
-      entropy_prior_person =
-        case_when(
-          stan_person < 0 ~ prior_group_entropy[stan_item],
-          TRUE ~ prior_person_entropy[stan_item]
-         ),
-      entropy_prior_item =
-        map2_dbl(
-          max_score, stan_person,
-          ~{
-            if (.y < 0) {
-              prior_group_item_entropy[.x, abs(.y)]
-            } else {
-              prior_item_entropy[.x, .y]
-            }
-          }
-        ),
-      iota_person = entropy_prior_person - entropy,
-      iota_item = entropy_prior_item - entropy
-    ) %>%
-    select(-entropy_prior_person, -entropy_prior_item)
-}
-
 .personify_group_observations <- function(df) {
   person_observations <-
     dplyr::ungroup(df) %>%
@@ -87,10 +34,7 @@
     return(
       dplyr::mutate(
         df,
-        dplyr::across(
-          c(dplyr::ends_with("_score"), entropy, dplyr::starts_with("iota_")),
-          ~{.x * weight}
-        )
+        dplyr::across(dplyr::ends_with("_score"), ~{.x * weight})
       )
     )
   }
@@ -118,7 +62,7 @@
     df %>% .personify() %>% .identify(),
     n = dplyr::n(),
     dplyr::across(
-      c(dplyr::ends_with("_score"), entropy, dplyr::starts_with("iota_")),
+      dplyr::ends_with("_score"),
       ~sum(.x * weight)
     ),
     dplyr::across(c(row, weight), list),
@@ -183,11 +127,14 @@
       )
     }
   log_lik <- .collapse("log_lik")
+  log_lik_rep <- .collapse("log_lik_rep")
+  log_lik_prior_person <- .collapse("log_lik_prior_person")
+  log_lik_prior_item <- .collapse("log_lik_prior_item")
   y_rep <- .collapse("y_rep")
   y <-
     matrix(
       pluck(df, "observed_score"),
-      nrow(log_lik), ncol(log_lik),
+      nrow(y_rep), ncol(y_rep),
       byrow = TRUE
     )
   if (use_loo) {
@@ -217,11 +164,10 @@
   } else {
     .expectation <- function(x) apply(x, 2, mean)
   }
-  p_score <- .expectation(.heaviside_difference(y, y_rep))
   dplyr::mutate(
     df,
     expected_score = .expectation(y_rep),
-    expected_mark = mark(.data$expected_score / .data$max_score),
+    expected_mark = mark(expected_score / .data$max_score),
     information_content =
       if (use_loo) {
         new_eloo(
@@ -231,9 +177,13 @@
       } else {
         .expectation(log_lik) / -log(2)
       },
-    p_score =
-      purrr::map2_dbl(indices, weights, ~{sum(p_score[.x] * .y) / sum(.y)}),
-    infit = information_content / entropy
+    entropy = .expectation(log_lik_rep) / -log(2),
+    p_score = .expectation(.heaviside_difference(y, y_rep)),
+    infit = information_content / entropy,
+    iota_person =
+      (.expectation(log_lik_prior_person) / -log(2)) - information_content,
+    iota_item = -
+      (.expectation(log_lik_prior_item) / - log(2)) - information_content
   )
 }
 
@@ -250,7 +200,6 @@ summary.rdfit <- function(object, ..., use_loo = NULL,
   ##       should be infit cutoffs, and plogis(-4) at the bottom.
   purrr::pluck(object, "data") %>%
     dplyr::mutate(row = dplyr::row_number()) %>%
-    .add_entropies(pluck(object, "stanfit")) %>%
     dplyr::group_by(...) %>%
     .aggregate_scores() %>%
     dplyr::ungroup() %>%

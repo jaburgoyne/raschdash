@@ -130,75 +130,49 @@ generated quantities {
   vector[K > 1 ? K : 0] thresholds = tau / sigma;
   vector[M > 1 ? M : 0] group_ability = xi / sigma;
   vector[N] person_ability = eta / sigma;
-  int<lower=0> y_prior_group[I];
-  int<lower=0> y_prior_person[I];
-  int<lower=0> y_prior_group_item[max_item_score, M];
-  int<lower=0> y_prior_item[max_item_score, N];
   int<lower=0> y_rep[O];
   vector[O] log_lik;
+  vector[O] log_lik_rep;
+  vector[O] log_lik_prior_person;
+  vector[O] log_lik_prior_item;
   {
+    // Sample just once from the prior distributions
     real prior_xi = M > 1 ?  normal_rng(0, psi[1]) : 0;
     real prior_eta = normal_rng(prior_xi, phi);
-    for (i in 1:I) {
-      int k = kk[i];
-      real beta_prior_group = prior_xi - delta[i];
-      real beta_prior_person = prior_eta - delta[i];
-      if (k == 1) {
-        y_prior_group[i] = bernoulli_logit_rng(beta_prior_group);
-        y_prior_person[i] = bernoulli_logit_rng(beta_prior_person);
-      } else if (k == K) {
-        y_prior_group[i] = pcm_rng(beta_prior_group - tau);
-        y_prior_person[i] = pcm_rng(beta_prior_person - tau);
-      } else {
-        y_prior_group[i] = binomial_rng(k, inv_logit(beta_prior_group));
-        y_prior_person[i] = binomial_rng(k, inv_logit(beta_prior_person));
-      }
-    }
-  }
-  {
     real prior_epsilon = L > 1 ? normal_rng(nu, theta_epsilon[1]) : nu;
     real prior_delta_raw = normal_rng(prior_epsilon, theta_upsilon_raw);
     real prior_delta = normal_rng(prior_epsilon, theta_upsilon);
     vector[K] prior_tau;
     if (K > 1) for (k in 1:K) prior_tau[k] = normal_rng(0, theta_tau[1]);
-    for (k in 1:max_item_score) {
-      for (m in 1:M) {
-        real beta_prior_group_item = (M > 1 ? xi[m] : 0) - prior_delta;
-        if (k == 1) {
-          y_prior_group_item[k, m] = bernoulli_logit_rng(beta_prior_group_item);
-        } else if (k == K) {
-          y_prior_group_item[k, m] = pcm_rng(beta_prior_group_item - prior_tau);
-        } else {
-          y_prior_group_item[k, m] =
-            binomial_rng(k, inv_logit(beta_prior_group_item));
-        }
+    for (o in 1:O) {
+      int i = ii[o];
+      int k = kk[i];
+      int n = nn[o];
+      real beta = (n < 0 ? xi[-n] : eta[n]) - delta[i];
+      real beta_prior_person = (n < 0 ? prior_xi : prior_eta) - delta[i];
+      real beta_prior_item =
+        (n < 0 ? xi[-n] : eta[n]) - (k == K ? prior_delta_raw : prior_delta);
+      if (k == 1) {
+        y_rep[o] = bernoulli_logit_rng(beta);
+        log_lik[o] = bernoulli_logit_lpmf(y[o] | beta);
+        log_lik_rep[o] = bernoulli_logit_lpmf(y_rep[o] | beta);
+        log_lik_prior_person[o] =
+          bernoulli_logit_lpmf(y[o] | beta_prior_person);
+        log_lik_prior_item[o] = bernoulli_logit_lpmf(y[o] | beta_prior_item);
+      } else if (k == K) {
+        y_rep[o] = pcm_rng(beta - tau);
+        log_lik[o] = pcm_lpmf(y[o] | beta - tau);
+        log_lik_rep[o] = pcm_lpmf(y_rep[o] | beta - tau);
+        log_lik_prior_person[o] = pcm_lpmf(y[o] | beta_prior_person - tau);
+        log_lik_prior_item[o] = pcm_lpmf(y[o] | beta_prior_item - prior_tau);
+      } else {
+        y_rep[o] = binomial_rng(k, inv_logit(beta));
+        log_lik[o] = binomial_logit_lpmf(y[o] | k, beta);
+        log_lik_rep[o] = binomial_logit_lpmf(y_rep[o] | k, beta);
+        log_lik_prior_person[o] =
+          binomial_logit_lpmf(y[o] | k, beta_prior_person);
+        log_lik_prior_item[o] = binomial_logit_lpmf(y[o] | k, beta_prior_item);
       }
-      for (n in 1:N) {
-        real beta_prior_item = eta[n] - prior_delta;
-        if (k == 1) {
-          y_prior_item[k, n] = bernoulli_logit_rng(beta_prior_item);
-        } else if (k == K) {
-          y_prior_item[k, n] = pcm_rng(beta_prior_item - prior_tau);
-        } else {
-          y_prior_item[k, n] = binomial_rng(k, inv_logit(beta_prior_item));
-        }
-      }
-    }
-  }
-  for (o in 1:O) {
-    int i = ii[o];
-    int k = kk[i];
-    int n = nn[o];
-    real beta = (n < 0 ? xi[-n] : eta[n]) - delta[i];
-    if (k == 1) {
-      y_rep[o] = bernoulli_logit_rng(beta);
-      log_lik[o] = bernoulli_logit_lpmf(y[o] | beta);
-    } else if (k == K) {
-      y_rep[o] = pcm_rng(beta - tau);
-      log_lik[o] = pcm_lpmf(y[o] | beta - tau);
-    } else {
-      y_rep[o] = binomial_rng(k, inv_logit(beta));
-      log_lik[o] = binomial_logit_lpmf(y[o] | k, beta);
     }
   }
 }
