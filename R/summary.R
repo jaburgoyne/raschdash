@@ -182,8 +182,8 @@
     infit = information_content / entropy,
     iota_person =
       (.expectation(log_lik_prior_person) / -log(2)) - information_content,
-    iota_item = -
-      (.expectation(log_lik_prior_item) / - log(2)) - information_content
+    iota_item =
+      (.expectation(log_lik_prior_item) / -log(2)) - information_content
   )
 }
 
