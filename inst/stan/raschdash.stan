@@ -136,12 +136,13 @@ generated quantities {
   vector[O] log_lik_prior_person;
   vector[O] log_lik_prior_item;
   {
-    // Sample just once from the prior distributions
+    // Maintain a single prior draw per sample.
     real prior_xi = M > 1 ?  normal_rng(0, psi[1]) : 0;
     real prior_eta = normal_rng(prior_xi, phi);
     real prior_epsilon = L > 1 ? normal_rng(nu, theta_epsilon[1]) : nu;
-    real prior_delta_raw = normal_rng(prior_epsilon, theta_upsilon_raw);
-    real prior_delta = normal_rng(prior_epsilon, theta_upsilon);
+    real rnorm = normal_rng(0, 1);
+    real prior_delta_raw = prior_epsilon + theta_upsilon_raw * rnorm;
+    real prior_delta = prior_epsilon + theta_upsilon * rnorm;
     vector[K] prior_tau;
     if (K > 1) for (k in 1:K) prior_tau[k] = normal_rng(0, theta_tau[1]);
     for (o in 1:O) {
@@ -157,21 +158,24 @@ generated quantities {
         log_lik[o] = bernoulli_logit_lpmf(y[o] | beta);
         log_lik_rep[o] = bernoulli_logit_lpmf(y_rep[o] | beta);
         log_lik_prior_person[o] =
-          bernoulli_logit_lpmf(y[o] | beta_prior_person);
-        log_lik_prior_item[o] = bernoulli_logit_lpmf(y[o] | beta_prior_item);
+          bernoulli_logit_lpmf(y_rep[o] | beta_prior_person);
+        log_lik_prior_item[o] =
+          bernoulli_logit_lpmf(y_rep[o] | beta_prior_item);
       } else if (k == K) {
         y_rep[o] = pcm_rng(beta - tau);
         log_lik[o] = pcm_lpmf(y[o] | beta - tau);
         log_lik_rep[o] = pcm_lpmf(y_rep[o] | beta - tau);
-        log_lik_prior_person[o] = pcm_lpmf(y[o] | beta_prior_person - tau);
-        log_lik_prior_item[o] = pcm_lpmf(y[o] | beta_prior_item - prior_tau);
+        log_lik_prior_person[o] = pcm_lpmf(y_rep[o] | beta_prior_person - tau);
+        log_lik_prior_item[o] =
+          pcm_lpmf(y_rep[o] | beta_prior_item - prior_tau);
       } else {
         y_rep[o] = binomial_rng(k, inv_logit(beta));
         log_lik[o] = binomial_logit_lpmf(y[o] | k, beta);
         log_lik_rep[o] = binomial_logit_lpmf(y_rep[o] | k, beta);
         log_lik_prior_person[o] =
-          binomial_logit_lpmf(y[o] | k, beta_prior_person);
-        log_lik_prior_item[o] = binomial_logit_lpmf(y[o] | k, beta_prior_item);
+          binomial_logit_lpmf(y_rep[o] | k, beta_prior_person);
+        log_lik_prior_item[o] =
+          binomial_logit_lpmf(y_rep[o] | k, beta_prior_item);
       }
     }
   }

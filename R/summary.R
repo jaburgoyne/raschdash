@@ -148,8 +148,10 @@
               rep(
                 1:ncol(object$stanfit),
                 nrow(object$stanfit)
-              )
+              ),
+            cores = getOption("mc.cores", 1)
           ),
+        cores = getOption("mc.cores", 1),
         save_psis = TRUE
       )
     .expectation <- function(x) {
@@ -181,9 +183,9 @@
     p_score = .expectation(.heaviside_difference(y, y_rep)),
     infit = information_content / entropy,
     iota_person =
-      (.expectation(log_lik_prior_person) / -log(2)) - information_content,
+      (.expectation(log_lik_prior_person) / -log(2)) - entropy,
     iota_item =
-      (.expectation(log_lik_prior_item) / -log(2)) - information_content
+      (.expectation(log_lik_prior_item) / -log(2)) - entropy
   )
 }
 

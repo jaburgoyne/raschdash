@@ -1277,12 +1277,12 @@ public:
                     current_statement_begin__ = 159;
                     stan::model::assign(log_lik_prior_person, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
-                                bernoulli_logit_log(get_base1(y, o, "y", 1), beta_prior_person), 
+                                bernoulli_logit_log(get_base1(y_rep, o, "y_rep", 1), beta_prior_person), 
                                 "assigning variable log_lik_prior_person");
                     current_statement_begin__ = 161;
                     stan::model::assign(log_lik_prior_item, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
-                                bernoulli_logit_log(get_base1(y, o, "y", 1), beta_prior_item), 
+                                bernoulli_logit_log(get_base1(y_rep, o, "y_rep", 1), beta_prior_item), 
                                 "assigning variable log_lik_prior_item");
                 } else if (as_bool(logical_eq(k, K))) {
                     current_statement_begin__ = 163;
@@ -1303,12 +1303,12 @@ public:
                     current_statement_begin__ = 166;
                     stan::model::assign(log_lik_prior_person, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
-                                pcm_lpmf(get_base1(y, o, "y", 1), subtract(beta_prior_person, tau), pstream__), 
+                                pcm_lpmf(get_base1(y_rep, o, "y_rep", 1), subtract(beta_prior_person, tau), pstream__), 
                                 "assigning variable log_lik_prior_person");
                     current_statement_begin__ = 167;
                     stan::model::assign(log_lik_prior_item, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
-                                pcm_lpmf(get_base1(y, o, "y", 1), subtract(beta_prior_item, prior_tau), pstream__), 
+                                pcm_lpmf(get_base1(y_rep, o, "y_rep", 1), subtract(beta_prior_item, prior_tau), pstream__), 
                                 "assigning variable log_lik_prior_item");
                 } else {
                     current_statement_begin__ = 169;
@@ -1329,12 +1329,12 @@ public:
                     current_statement_begin__ = 172;
                     stan::model::assign(log_lik_prior_person, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
-                                binomial_logit_log(get_base1(y, o, "y", 1), k, beta_prior_person), 
+                                binomial_logit_log(get_base1(y_rep, o, "y_rep", 1), k, beta_prior_person), 
                                 "assigning variable log_lik_prior_person");
                     current_statement_begin__ = 174;
                     stan::model::assign(log_lik_prior_item, 
                                 stan::model::cons_list(stan::model::index_uni(o), stan::model::nil_index_list()), 
-                                binomial_logit_log(get_base1(y, o, "y", 1), k, beta_prior_item), 
+                                binomial_logit_log(get_base1(y_rep, o, "y_rep", 1), k, beta_prior_item), 
                                 "assigning variable log_lik_prior_item");
                 }
                 }
