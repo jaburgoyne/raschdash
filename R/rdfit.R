@@ -256,9 +256,10 @@ new_rdfit <- function(cohorts,
       "group_ability", "person_ability",
       "testlet_difficulty", "item_difficulty",
       "thresholds",
+      "prior_group_ability", "prior_person_ability",
+      "prior_testlet_difficulty", "prior_item_difficulty",
       "y_rep",
       "log_lik", "log_lik_rep"
-      "log_lik_prior_person", "log_lik_prior_item",
     )
   LOGIT_PARS <- c("xi", "eta", "epsilon", "delta", "tau")
   HYPER_PARS <-

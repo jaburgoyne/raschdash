@@ -97,6 +97,9 @@
       stringr::str_c(par, "_difficulty")
     }
   calibrations <- as.matrix(stanfit, stan_par)[, purrr::pluck(df, stan_id)]
+  prior_calibrations <- as.matrix(stanfit, stringr::str_c("prior_", stan_par))
+  ## For a consistent estimator, k -> \infty as S -> \infty
+  k <- round(sqrt(nrow(calibrations)))
   dplyr::mutate(
     df,
     !!stan_par := mean + sd * apply(calibrations, 2, stats::median),
@@ -104,7 +107,17 @@
     `5%` = mean + sd * apply(calibrations, 2, stats::quantile, 0.05),
     `25%` = mean + sd * apply(calibrations, 2, stats::quantile, 0.25),
     `75%` = mean + sd * apply(calibrations, 2, stats::quantile, 0.75),
-    `95%` = mean + sd * apply(calibrations, 2, stats::quantile, 0.95)
+    `95%` = mean + sd * apply(calibrations, 2, stats::quantile, 0.95),
+    iota =
+      apply(
+        calibrations,
+        2,
+        FNN::KL.divergence,
+        Y = prior_calibrations,
+        k = k
+      ) %>%
+      magrittr::extract(k, ) %>%
+      magrittr::divide_by(log(2))
   )
 }
 
@@ -128,8 +141,6 @@
     }
   log_lik <- .collapse("log_lik")
   log_lik_rep <- .collapse("log_lik_rep")
-  log_lik_prior_person <- .collapse("log_lik_prior_person")
-  log_lik_prior_item <- .collapse("log_lik_prior_item")
   y_rep <- .collapse("y_rep")
   y <-
     matrix(
@@ -170,22 +181,18 @@
     df,
     expected_score = .expectation(y_rep),
     expected_mark = mark(expected_score / .data$max_score),
-    information_content =
+    information =
       if (use_loo) {
         new_eloo(
-          loo$pointwise[, "elpd_loo"] / -log(2),
+          loo$pointwise[, "elpd_loo"] / log(0.5),
           loo::pareto_k_values(loo)
         )
       } else {
-        .expectation(log_lik) / -log(2)
+        .expectation(log_lik) / log(0.5)
       },
-    entropy = .expectation(log_lik_rep) / -log(2),
+    entropy = .expectation(log_lik_rep) / log(0.5),
     p_score = .expectation(.heaviside_difference(y, y_rep)),
-    infit = information_content / entropy,
-    iota_person =
-      (.expectation(log_lik_prior_person) / -log(2)) - entropy,
-    iota_item =
-      (.expectation(log_lik_prior_item) / -log(2)) - entropy
+    infit = information / entropy
   )
 }
 
