@@ -1,3 +1,16 @@
+.raschdash_model <-
+  cmdstanr::cmdstan_model(
+    fs::path(
+      if (fs::dir_exists("stan")) {
+        fs::path("stan")
+      } else {
+        fs::path("inst", "stan")
+      },
+      "raschdash.stan"
+    ),
+    dir = fs::dir_create("lib")
+  )
+
 #' Fit a `raschdash` model
 #'
 #' Create `rdfit` objects from observed data.
@@ -361,8 +374,7 @@ new_rdfit <- function(cohorts,
     )
   ## Fit the model.
   stanfit <-
-    rstan::sampling(
-      stanmodels$raschdash,
+    .raschdash_model$sample(
       data =
         list(
           M = nrow(groups),
@@ -384,14 +396,14 @@ new_rdfit <- function(cohorts,
       # iter = 10000,
       # The hierarchical models do not converge without
       # a high adapt_delta.
-      control = list(adapt_delta = 0.99),
-      pars = stan_pars,
+      adapt_delta = 0.99,
+      max_treedepth = 12,
       ...
     )
   structure(
     list(
       data = dplyr::as_tibble(observations),
-      stanfit = stanfit
+      stanfit = rstan::read_stan_csv(stanfit$output_files())
     ),
     class = "rdfit"
   )

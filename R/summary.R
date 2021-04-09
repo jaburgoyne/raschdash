@@ -157,8 +157,8 @@
             exp(log_lik),
             chain_id =
               rep(
-                1:ncol(object$stanfit),
-                nrow(object$stanfit)
+                1:ncol(stanfit),
+                nrow(stanfit)
               ),
             cores = getOption("mc.cores", 1)
           ),
