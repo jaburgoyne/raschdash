@@ -63,9 +63,9 @@
     n = dplyr::n(),
     dplyr::across(
       dplyr::ends_with("_score"),
-      ~sum(.x * weight)
+      ~sum(.x * .data$weight)
     ),
-    dplyr::across(c(row, weight), list),
+    dplyr::across(c("row", "weight"), list),
     ## The stan_ variables are only useful for retrieving
     ## calibrations, in which case they will be unique. Choosing the
     ## first value is a cheap solution to do *something* for the
@@ -74,8 +74,7 @@
   )
 }
 
-.add_calibrations <- function(df, object, mean, sd) {
-  stanfit <- object$stanfit
+.add_calibrations <- function(df, draws, mean, sd) {
   par <-
     if (has_name(df, "person") && !vec_duplicate_any(df$person)) {
       "person"
@@ -96,45 +95,44 @@
     } else if (vec_in(par, c("testlet", "item"))) {
       stringr::str_c(par, "_difficulty")
     }
-  calibrations <- as.matrix(stanfit, stan_par)[, purrr::pluck(df, stan_id)]
-  prior_calibrations <- as.matrix(stanfit, stringr::str_c("prior_", stan_par))
+  calibrations <- posterior::subset_draws(draws, stan_par)
+  prior_calibrations <-
+    posterior::extract_variable(draws, stringr::str_c("prior_", stan_par))
   ## For a consistent estimator, k -> \infty as S -> \infty
-  k <- round(sqrt(nrow(calibrations)))
-  dplyr::mutate(
-    df,
-    !!stan_par := mean + sd * apply(calibrations, 2, stats::median),
-    mad = sd * apply(calibrations, 2, stats::mad),
-    `5%` = mean + sd * apply(calibrations, 2, stats::quantile, 0.05),
-    `25%` = mean + sd * apply(calibrations, 2, stats::quantile, 0.25),
-    `75%` = mean + sd * apply(calibrations, 2, stats::quantile, 0.75),
-    `95%` = mean + sd * apply(calibrations, 2, stats::quantile, 0.95),
-    iota =
-      apply(
-        calibrations,
-        2,
-        FNN::KL.divergence,
-        Y = prior_calibrations,
-        k = k
-      ) %>%
-      magrittr::extract(k, ) %>%
-      magrittr::divide_by(log(2))
-  )
+  k <- round(sqrt(vec_size(prior_calibrations)))
+  df %>%
+    dplyr::inner_join(
+      calibrations %>%
+        summary(
+          median = stats::median,
+          mad = stats::mad,
+          ~posterior::quantile2(.x, c(0.05, 0.25, 0.75, 0.95)),
+          iota = ~{FNN::KL.divergence(c(.x), prior_calibrations, k)[k]}
+        ) %>%
+        tidyr::separate(
+          "variable",
+          c(NA, stan_id, NA),
+          sep = "\\]|\\[",
+          convert = TRUE
+        ),
+      by = stan_id
+    ) %>%
+    dplyr::mutate(
+      dplyr::across(c("median", "q5", "q25", "q75", "q95"), ~{mean + sd * .x}),
+      dplyr::across("mad", ~{sd * .x}),
+      dplyr::across("iota", ~{.x / log(2)})
+    ) %>%
+    dplyr::rename(!!stan_par := "median")
 }
 
-.add_pp_statistics <- function(df, stanfit, use_loo, mark) {
+.add_pp_statistics <- function(df, draws, use_loo, cores, mark) {
   indices <- purrr::pluck(df, "row")
   weights <- purrr::pluck(df, "weight")
   .collapse <-
     function(par) {
-      m <- as.matrix(stanfit, par)
+      m <- posterior::subset_draws(draws, par)
       mapply(
-        function(i, w) {
-          if (vec_size(i) > 1) {
-            apply(sweep(m[, i], 2, w, `*`), 1, sum)
-          } else {
-            w * m[, i]
-          }
-        },
+        function(i, w) apply(sweep(m[, , i], 3, w, `*`), 1:2, sum),
         indices,
         weights
       )
@@ -144,7 +142,7 @@
   y_rep <- .collapse("y_rep")
   y <-
     matrix(
-      pluck(df, "observed_score"),
+      purrr::pluck(df, "observed_score"),
       nrow(y_rep), ncol(y_rep),
       byrow = TRUE
     )
@@ -155,14 +153,18 @@
         r_eff =
           loo::relative_eff(
             exp(log_lik),
+            cores = cores,
+            ## This ordering is dependent on how mapply() works earlier. :(
+            ## But leaving draws in arrays does not work, because the PSIS
+            ## object from loo currently reverts to matrix form regardless of
+            ## the input.
             chain_id =
               rep(
-                1:ncol(stanfit),
-                nrow(stanfit)
-              ),
-            cores = getOption("mc.cores", 1)
+                1:posterior::nchains(draws),
+                each = posterior::niterations(draws)
+              )
           ),
-        cores = getOption("mc.cores", 1),
+        cores = cores,
         save_psis = TRUE
       )
     .expectation <- function(x) {
@@ -180,7 +182,7 @@
   dplyr::mutate(
     df,
     expected_score = .expectation(y_rep),
-    expected_mark = mark(expected_score / .data$max_score),
+    expected_mark = mark(.data$expected_score / .data$max_score),
     information =
       if (use_loo) {
         new_eloo(
@@ -192,17 +194,18 @@
       },
     entropy = .expectation(log_lik_rep) / log(0.5),
     p_score = .expectation(.heaviside_difference(y, y_rep)),
-    infit = information / entropy
+    infit = .data$information / .data$entropy
   )
 }
 
 # Exports ----------------------------------------------------------------------
 
 #' @export
-print.rdfit <- function(x, ...) print(x$stanfit, ...)
+print.rdfit <- function(x, ...) print(x$draws, ...)
 
 #' @export
-summary.rdfit <- function(object, ..., use_loo = NULL,
+summary.rdfit <- function(object, ...,
+                          use_loo = NULL, cores = getOption("mc.cores", 1),
                           mean = 0, sd = 1, mark = identity) {
   ## TODO: Document the output. Note that slope of infit vs qlogis(p_info)
   ##       is almost exactly 8, implying that plogis(4) and plogis(8)
@@ -215,9 +218,9 @@ summary.rdfit <- function(object, ..., use_loo = NULL,
     dplyr::mutate(
       observed_mark = mark(.data$observed_score / .data$max_score)
     ) %>%
-    .add_calibrations(object, mean, sd) %>%
+    .add_calibrations(purrr::pluck(object, "draws"), mean, sd) %>%
     .add_pp_statistics(
-      pluck(object, "stanfit"),
+      purrr::pluck(object, "draws"),
       ## By default, use LOO only for complete observations.
       use_loo =
         if (is_null(use_loo)) {
@@ -225,6 +228,7 @@ summary.rdfit <- function(object, ..., use_loo = NULL,
         } else {
           use_loo
         },
+      cores = cores,
       mark = mark
     ) %>%
     dplyr::select(

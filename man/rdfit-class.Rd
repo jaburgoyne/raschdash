@@ -15,6 +15,7 @@ rdfit(
   item,
   max_score,
   obs_score,
+  weight,
   k = 1,
   ...
 )
@@ -32,10 +33,12 @@ new_rdfit(
   obs_groups,
   obs_group_items,
   obs_group_scores,
+  group_obs_weights,
   obs_person_cohorts,
   obs_persons,
   obs_person_items,
   obs_person_scores,
+  person_obs_weights,
   k = 1,
   pars = c("standard", "logit", "hyper", "all"),
   ...
@@ -43,8 +46,8 @@ new_rdfit(
 }
 \arguments{
 \item{data}{a data frame with columns for cohort, group, person, testlet,
-item, maximum possible item score, and observed score. For
-group-level observations, the person should be \code{NA}.}
+item, maximum possible item score, observed score, and weight.
+For group-level observations, the person should be \code{NA}.}
 
 \item{cohort}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> cohort column. Defaults to a
 generic \emph{All} cohort.}
@@ -62,6 +65,8 @@ generic \emph{All} testlet.}
 \item{max_score}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> maximum-score column}
 
 \item{obs_score}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> observed score column}
+
+\item{weight}{<\link[tidyr:tidyr_tidy_select]{tidyr::tidyr_tidy_select}> weight column}
 
 \item{k}{maximum score of rating-scale items. Defaults to no rating scales.}
 
@@ -86,9 +91,15 @@ maximum scores(\code{max_scores})}
 cohorts (\code{obs_group_cohorts}), groups (\code{obs_groups}), items
 (\code{obs_group_items}), and observed scores (\code{obs_group_scores})}
 
+\item{group_obs_weights}{vector of non-negative regression weights per
+group-level observation}
+
 \item{obs_person_cohorts, obs_persons, obs_person_items, obs_person_scores}{for the person-level observations, vectors of the corresponding
 cohorts (\code{obs_person_cohorts}), persons (\code{obs_persons}), items
 (\code{obs_person_items}), and observed scores (\code{obs_person_scores})}
+
+\item{person_obs_weights}{vector of non-negative regression weights per
+person-level observation}
 
 \item{pars}{which parameters to save from the Stan model. Defaults to
 \code{standard}, which only saves parameters on the standard scale,
@@ -101,9 +112,9 @@ specific to the Stan implementation.}
 An object of class \code{rdfit} with the following attributes.
 \describe{
 \item{\code{data}}{The input data as passed to Stan.}
-\item{\code{stanfit}}{
-The \link[rstan:stanfit-class]{rstan::stanfit} object for the fitted model. It contains samples of
-the following parameters.
+\item{\code{draws}}{
+The \link[posterior:draws_array]{posterior::draws_array} object for the fitted model. It contains
+samples of the following parameters.
 \itemize{
 \item standard-scale parameters
 \itemize{
@@ -130,6 +141,14 @@ group, person, and item
 \itemize{
 \item \code{log_lik}: log likelihood of observed scores
 \item \code{log_lik_rep}: log likelihood of predicted scores
+\item \code{log_lik_prior_person}: log likelihood of predicted scores under the
+prior distribution of person and group
+parameters (sampled under posterior hyper-
+parameters)
+\item \code{log_lik_prior_item}: log likelihood of predicted scores under the
+prior distribution of item and testlet
+parameters (sampled under posterior hyper-
+parameters)
 }
 \item logit-scale parameters (when \code{pars = "logit"} or \code{pars = "hyper"})
 \itemize{
@@ -146,14 +165,9 @@ difficulty (if any rating-scale items are present)
 \item \code{psi}: scale of group abilities
 \item \code{phi}: scale of person abilities (relative to group)
 \item \code{theta_epsilon}: scale of testlet difficulties
-\item \code{theta_upsilon}: scale of item difficulties (relative to testlet)
-\item \code{theta}: scale of item difficulties (overall)
+\item \code{theta_upsilon}: scale of item/threshold difficulties (relative to testlet)
 }
 }
-}
-
-\item{\code{loo}}{
-A \link[loo:loo]{loo::loo} object for \code{stanfit}.
 }
 }
 }

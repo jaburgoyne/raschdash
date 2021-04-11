@@ -3,4 +3,4 @@
 .RData
 .Ruserdata
 .DS_Store
-lib
+inst/stan/raschdash

@@ -1,7 +1,7 @@
 Type: Package
 Package: raschdash
 Title: Rasch-Model Dashboards for Classroom Testing
-Version: 0.0.0.9001
+Version: 0.0.0.9002
 Authors@R:
     person(given = c("John", "Ashley"),
            family = "Burgoyne",
@@ -23,10 +23,13 @@ Imports:
     loo,
     magrittr,
     methods,
+    posterior,
     purrr,
     rlang,
     rstan,
     stringr,
+    tibble,
+    tidyr,
     vctrs,
     FNN,
     Hmisc,

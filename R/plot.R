@@ -58,9 +58,9 @@
     plotly::add_markers(
       text =
         ~ str_c(
-          person, " (θ = ",
+          person, " (\u03b8 = ",
           .formatS(person_ability), ")\n",
-          item, " (δ = ",
+          item, " (\u03b4 = ",
           .formatS(item_difficulty), ")\n",
           "\n",
           "Observed Score = ",
@@ -69,14 +69,14 @@
           "Expected Score = ",
           .formatS(expected_score), " / ",
           max_score, "\n",
-          "P(Score ≤ Observed)",
+          "P(Score \u2264 Observed)",
           .formatP(p_score), "\n",
           "\n",
           "Information Content = ",
           .formatS(information_content, 1), "\n",
           "Entropy = ",
           .formatS(entropy, 1), "\n",
-          "P(Information ≤ Observed)",
+          "P(Information \u2264 Observed)",
           .formatP(p_information)
         ),
       hoverinfo = "text",
@@ -112,12 +112,16 @@
     )
 }
 
+## tidyselect developers stubbornly refuse to export where
+utils::globalVariables("where")
+
 #' @export
 plot.rdfit <- function(x, ..., mark = identity, mean = 0, sd = 1) {
   df <-
     summary(x, ..., mark = mark, mean = mean, sd = sd) %>%
     dplyr::mutate(
       dplyr::across(
+        ## tidyselect seems not to export where
         where(~ vec_is(.x, new_eloo())),
         field, "value"
       )
@@ -138,8 +142,8 @@ plot.rdfit <- function(x, ..., mark = identity, mean = 0, sd = 1) {
     }
   plotlist <-
     df %>%
-    tidyr::nest(dat = !any_of("cohort")) %>%
-    deframe() %>%
-    map(plotfun, mark_limits)
+    tidyr::nest(dat = !dplyr::any_of("cohort")) %>%
+    tibble::deframe() %>%
+    purrr::map(plotfun, mark_limits)
   if (length(plotlist) == 1) plotlist[[1]] else plotlist
 }

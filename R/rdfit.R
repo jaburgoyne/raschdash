@@ -7,8 +7,7 @@
         fs::path("inst", "stan")
       },
       "raschdash.stan"
-    ),
-    dir = fs::dir_create("lib")
+    )
   )
 
 #' Fit a `raschdash` model
@@ -71,9 +70,9 @@
 #' @return An object of class `rdfit` with the following attributes.
 #' \describe{
 #'  \item{`data`}{The input data as passed to Stan.}
-#'  \item{`stanfit`}{
-#'   The [rstan::stanfit] object for the fitted model. It contains samples of
-#'   the following parameters.
+#'  \item{`draws`}{
+#'   The [posterior::draws_array] object for the fitted model. It contains
+#'   samples of the following parameters.
 #'   * standard-scale parameters
 #'       * `group_ability`: group abilities
 #'       * `person_ability`: person abilities
@@ -115,10 +114,6 @@
 #'       * `phi`: scale of person abilities (relative to group)
 #'       * `theta_epsilon`: scale of testlet difficulties
 #'       * `theta_upsilon`: scale of item/threshold difficulties (relative to testlet)
-#'  }
-#'
-#'  \item{`loo`}{
-#'   A [loo::loo] object for `stanfit`.
 #'  }
 #' }
 #' @name rdfit-class
@@ -283,7 +278,7 @@ new_rdfit <- function(cohorts,
       "hyper" = c(STANDARD_PARS, LOGIT_PARS, HYPER_PARS),
       "logit" = c(STANDARD_PARS, LOGIT_PARS),
       "standard" = c(STANDARD_PARS),
-      NA
+      NULL
     )
   if (length(testlets) == 1) {
     stan_pars <-
@@ -403,7 +398,7 @@ new_rdfit <- function(cohorts,
   structure(
     list(
       data = dplyr::as_tibble(observations),
-      stanfit = rstan::read_stan_csv(stanfit$output_files())
+      draws = stanfit$draws(variables = stan_pars)
     ),
     class = "rdfit"
   )
